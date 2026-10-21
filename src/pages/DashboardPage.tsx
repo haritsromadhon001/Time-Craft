@@ -171,14 +171,14 @@ export const DashboardPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link to="/targets" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}>
+          <div className="empty-state-actions">
+            <Link to="/targets" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.85rem' }}>
               Atur Target
             </Link>
-            <Link to="/screen-time" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}>
+            <Link to="/screen-time" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.85rem' }}>
               Catat Aktivitas
             </Link>
-            <Link to="/focus-timer" className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}>
+            <Link to="/focus-timer" className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.85rem' }}>
               Mulai Fokus
             </Link>
           </div>

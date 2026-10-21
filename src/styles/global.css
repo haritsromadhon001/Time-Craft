@@ -213,6 +213,20 @@ code {
   white-space: nowrap;
 }
 
+.mobile-header {
+  display: none;
+}
+
+.mobile-only-close-btn {
+  display: none !important;
+}
+
+.sidebar-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .sidebar-toggle-btn {
   width: 30px;
   height: 30px;
@@ -1260,51 +1274,265 @@ code {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .app-shell {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
   }
 
-  .sidebar {
-    position: static;
-    height: auto;
-    border-right: none;
+  /* Bilah Atas Khusus Seluler / HP */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    padding: 0 1rem;
+    background-color: var(--bg-primary);
     border-bottom: 1px solid var(--border-subtle);
-    padding: 1rem;
-    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .mobile-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .mobile-header-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  .mobile-header-title {
+    font-size: 1.05rem;
+    font-weight: 750;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .mobile-header-subtitle {
+    font-size: 0.68rem;
+    color: var(--primary-blue);
+    font-weight: 600;
+  }
+
+  .mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .mobile-hamburger-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--surface-card);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+  }
+
+  .mobile-hamburger-btn:hover {
+    background-color: var(--bg-secondary);
+  }
+
+  /* Latar Belakang Gelap Penutup Saat Laci Terbuka */
+  .mobile-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1040;
+    animation: popoverFadeIn 0.2s ease;
+  }
+
+  /* Laci Sidebar yang Meluncur Halus dari Sisi Kiri */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 290px;
+    max-width: 86vw;
+    height: 100%;
+    z-index: 1050;
+    background-color: var(--bg-primary);
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.2);
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.15rem 1rem;
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: none;
+    gap: 0.85rem;
+  }
+
+  .sidebar.mobile-drawer-open {
+    transform: translateX(0);
+  }
+
+  .desktop-only-btn {
+    display: none !important;
+  }
+
+  .mobile-only-close-btn {
+    display: inline-flex !important;
   }
 
   .nav-list {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
-  .topbar {
-    padding: 0.85rem 1.25rem;
+  .nav-item {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.92rem;
+  }
+
+  /* Area Konten Utama */
+  .main-wrapper {
+    flex: 1;
+    min-width: 0;
   }
 
   .main-content {
-    padding: 1.25rem;
+    padding: 1.15rem 0.95rem 5rem;
+    gap: 1.1rem;
   }
 
-  .grid-3,
-  .grid-2 {
-    grid-template-columns: 1fr;
+  /* Header Halaman di Layar HP */
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
   }
-}
 
-@media (max-width: 540px) {
+  .page-title {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  .page-subtitle {
+    font-size: 0.8rem;
+  }
+
+  /* Widget Jam di Halaman Utama */
+  .live-clock-widget {
+    width: 100%;
+    min-width: 0;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .live-clock-digits {
+    font-size: 1.25rem;
+  }
+
+  /* Tombol Aksi Halaman Tertata Rapi 2+1 */
+  .page-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .page-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.58rem 0.65rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .page-actions .btn-primary {
+    grid-column: span 2;
+    padding: 0.72rem 0.85rem;
+    font-size: 0.88rem;
+  }
+
+  /* Kartu & Grid di Seluler */
+  .card {
+    padding: 1.15rem 1rem;
+    border-radius: var(--radius-md);
+  }
+
   .grid-4 {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .grid-2,
+  .grid-3 {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-card-value {
+    font-size: 1.25rem;
+  }
+
+  .timer-display-box {
+    padding: 1.5rem 1rem;
+  }
+
+  .timer-digits {
+    font-size: 2.85rem;
   }
 
   .bar-chart-grid {
     gap: 0.35rem;
   }
 
-  .timer-digits {
-    font-size: 2.85rem;
+  /* Tombol Aksi Kartu Sambutan di Seluler */
+  .empty-state-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+  }
+
+  .empty-state-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .empty-state-actions .btn-primary {
+    grid-column: span 2;
+  }
+
+  /* Tombol Mengambang Kontak di Seluler */
+  .floating-contact-root {
+    bottom: 18px;
+    right: 18px;
+  }
+
+  .floating-contact-trigger {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 400px) {
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .page-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .page-actions .btn-primary {
+    grid-column: span 1;
   }
 }
 

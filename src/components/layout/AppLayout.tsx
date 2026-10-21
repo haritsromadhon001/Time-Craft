@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Clock,
   LayoutDashboard,
@@ -10,6 +10,8 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Menu,
+  X,
 } from 'lucide-react';
 import { getSupabaseConfigStatus } from '../../services/supabase';
 import { useApp } from '../../context/AppContext';
@@ -21,6 +23,23 @@ export const AppLayout: React.FC = () => {
   const { user, refreshUserData } = useApp();
   const dbStatus = getSupabaseConfigStatus();
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   const activeTimezone = user?.timezone || 'Asia/Jakarta';
   const userInitial = (user?.display_name || user?.email || 'U')
@@ -48,8 +67,60 @@ export const AppLayout: React.FC = () => {
         Lewati ke konten utama
       </a>
 
-      {/* Sidebar Kiri Minimalis & Dapat Dilipat (Collapsible SaaS Sidebar) */}
-      <aside className="sidebar" aria-label="Navigasi Utama">
+      {/* Bilah Atas Khusus Seluler / HP (Mobile Header) */}
+      <header className="mobile-header" aria-label="Bilah Navigasi Seluler">
+        <div className="mobile-header-brand">
+          <img
+            src="/favicon.svg"
+            alt="Logo TimeCraft"
+            width={28}
+            height={28}
+            style={{ borderRadius: '6px', flexShrink: 0 }}
+          />
+          <div className="mobile-header-text">
+            <span className="mobile-header-title">TimeCraft</span>
+            <span className="mobile-header-subtitle">Screen Time &amp; Focus</span>
+          </div>
+        </div>
+
+        <div className="mobile-header-right">
+          <div className="user-avatar" style={{ width: '30px', height: '30px', fontSize: '0.8rem' }}>
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user?.display_name || 'Foto'}
+                className="user-avatar-img"
+              />
+            ) : (
+              userInitial
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label={mobileMenuOpen ? 'Tutup Menu Navigasi' : 'Buka Menu Navigasi'}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Latar Belakang Gelap Penutup Saat Menu Seluler Terbuka (Backdrop) */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-drawer-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar / Laci Menu Navigasi (Desktop Collapsible & Mobile Slide-over Drawer) */}
+      <aside
+        className={`sidebar ${mobileMenuOpen ? 'mobile-drawer-open' : ''}`}
+        aria-label="Navigasi Utama"
+      >
         <div className="sidebar-top">
           <div className="brand-box">
             <img
@@ -67,15 +138,29 @@ export const AppLayout: React.FC = () => {
             )}
           </div>
 
-          <button
-            type="button"
-            className="sidebar-toggle-btn"
-            onClick={() => setCollapsed((prev) => !prev)}
-            title={collapsed ? 'Perluas Sidebar' : 'Kecilkan Sidebar'}
-            aria-label={collapsed ? 'Perluas Sidebar' : 'Kecilkan Sidebar'}
-          >
-            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          </button>
+          <div className="sidebar-top-actions">
+            {/* Tombol ciutkan sidebar (Desktop) */}
+            <button
+              type="button"
+              className="sidebar-toggle-btn desktop-only-btn"
+              onClick={() => setCollapsed((prev) => !prev)}
+              title={collapsed ? 'Perluas Sidebar' : 'Kecilkan Sidebar'}
+              aria-label={collapsed ? 'Perluas Sidebar' : 'Kecilkan Sidebar'}
+            >
+              {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </button>
+
+            {/* Tombol silang tutup laci (Mobile) */}
+            <button
+              type="button"
+              className="sidebar-toggle-btn mobile-only-close-btn"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Tutup Menu"
+              title="Tutup Menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {!collapsed && <div className="sidebar-section-label">MENU UTAMA</div>}
