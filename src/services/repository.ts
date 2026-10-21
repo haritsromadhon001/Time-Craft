@@ -102,13 +102,31 @@ function hashPasswordSimple(password: string): string {
 
 export class TimeCraftRepository {
   private customStore?: Storage;
+  private supabaseUnreachable: boolean = false;
 
   constructor(customStore?: Storage) {
     this.customStore = customStore;
   }
 
+  private isNetworkFetchError(err: unknown): boolean {
+    if (!err) return false;
+    const str = String((err as any)?.message || err).toLowerCase();
+    return (
+      str.includes('failed to fetch') ||
+      str.includes('err_name_not_resolved') ||
+      str.includes('network') ||
+      str.includes('fetch error') ||
+      str.includes('load failed')
+    );
+  }
+
   public isUsingSupabase(): boolean {
-    return getSupabaseConfigStatus().isConfigured && supabase !== null && !this.customStore;
+    return (
+      getSupabaseConfigStatus().isConfigured &&
+      supabase !== null &&
+      !this.customStore &&
+      !this.supabaseUnreachable
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -117,31 +135,44 @@ export class TimeCraftRepository {
 
   async getCurrentUser(): Promise<UserProfile | null> {
     if (this.isUsingSupabase() && supabase) {
-      const { data: authData, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !authData.user) return null;
+      try {
+        const { data: authData, error: authErr } = await supabase.auth.getUser();
+        if (authErr) {
+          if (this.isNetworkFetchError(authErr)) {
+            this.supabaseUnreachable = true;
+          } else {
+            return null;
+          }
+        } else if (authData?.user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .maybeSingle();
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .maybeSingle();
+          if (profileData) {
+            return profileData as UserProfile;
+          }
 
-      if (profileData) {
-        return profileData as UserProfile;
+          const fallbackProfile: UserProfile = {
+            id: authData.user.id,
+            email: authData.user.email ?? '',
+            display_name:
+              (authData.user.user_metadata?.display_name as string) ||
+              (authData.user.email?.split('@')[0] ?? 'Pengguna'),
+            timezone:
+              (authData.user.user_metadata?.timezone as string) || getDetectedTimezone(),
+            avatar_url: (authData.user.user_metadata?.avatar_url as string) || null,
+            created_at: authData.user.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          return fallbackProfile;
+        }
+      } catch (err: unknown) {
+        if (this.isNetworkFetchError(err)) {
+          this.supabaseUnreachable = true;
+        }
       }
-
-      const fallbackProfile: UserProfile = {
-        id: authData.user.id,
-        email: authData.user.email ?? '',
-        display_name:
-          (authData.user.user_metadata?.display_name as string) ||
-          (authData.user.email?.split('@')[0] ?? 'Pengguna'),
-        timezone:
-          (authData.user.user_metadata?.timezone as string) || getDetectedTimezone(),
-        created_at: authData.user.created_at,
-        updated_at: new Date().toISOString(),
-      };
-      return fallbackProfile;
     }
 
     const vault = readLocalVault(this.customStore);
@@ -171,36 +202,51 @@ export class TimeCraftRepository {
     }
 
     if (this.isUsingSupabase() && supabase) {
-      const { data, error } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password: params.password,
-        options: {
-          data: {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: params.password,
+          options: {
+            data: {
+              display_name: cleanName,
+              timezone: tz,
+            },
+          },
+        });
+
+        if (error) {
+          if (this.isNetworkFetchError(error)) {
+            console.warn('Supabase URL tidak dapat dijangkau, otomatis beralih ke Local Vault.');
+            this.supabaseUnreachable = true;
+          } else {
+            return { user: null, error: error.message };
+          }
+        } else if (data.user) {
+          const nowIso = new Date().toISOString();
+          const newProfile: UserProfile = {
+            id: data.user.id,
+            email: cleanEmail,
             display_name: cleanName,
             timezone: tz,
-          },
-        },
-      });
+            avatar_url: null,
+            created_at: nowIso,
+            updated_at: nowIso,
+          };
 
-      if (error || !data.user) {
-        return { user: null, error: error?.message || 'Gagal mendaftarkan akun di Supabase.' };
+          await supabase.from('profiles').upsert(newProfile);
+          return { user: newProfile };
+        }
+      } catch (err: unknown) {
+        if (this.isNetworkFetchError(err)) {
+          console.warn('Koneksi Supabase terputus, otomatis beralih ke Local Vault.');
+          this.supabaseUnreachable = true;
+        } else {
+          return { user: null, error: String((err as any)?.message || err) };
+        }
       }
-
-      const nowIso = new Date().toISOString();
-      const newProfile: UserProfile = {
-        id: data.user.id,
-        email: cleanEmail,
-        display_name: cleanName,
-        timezone: tz,
-        created_at: nowIso,
-        updated_at: nowIso,
-      };
-
-      await supabase.from('profiles').upsert(newProfile);
-      return { user: newProfile };
     }
 
-    // Mode Brankas Lokal Terisolasi (ketika Supabase belum dikonfigurasi)
+    // Mode Brankas Lokal Terisolasi (ketika Supabase belum dikonfigurasi atau tidak dapat dijangkau)
     const vault = readLocalVault(this.customStore);
     const existingIdx = vault.users.findIndex((u) => u.email === cleanEmail);
     if (existingIdx !== -1) {
@@ -242,15 +288,29 @@ export class TimeCraftRepository {
     const cleanEmail = params.email.trim().toLowerCase();
 
     if (this.isUsingSupabase() && supabase) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: params.password,
-      });
-      if (error) {
-        return { user: null, error: 'Email atau kata sandi salah, atau akun belum terdaftar.' };
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: params.password,
+        });
+        if (error) {
+          if (this.isNetworkFetchError(error)) {
+            console.warn('Supabase tidak dapat dijangkau, otomatis beralih memeriksa Local Vault.');
+            this.supabaseUnreachable = true;
+          } else {
+            return { user: null, error: 'Email atau kata sandi salah, atau akun belum terdaftar.' };
+          }
+        } else {
+          const current = await this.getCurrentUser();
+          return { user: current };
+        }
+      } catch (err: unknown) {
+        if (this.isNetworkFetchError(err)) {
+          this.supabaseUnreachable = true;
+        } else {
+          return { user: null, error: 'Gagal menghubungi layanan login.' };
+        }
       }
-      const current = await this.getCurrentUser();
-      return { user: current };
     }
 
     const vault = readLocalVault(this.customStore);

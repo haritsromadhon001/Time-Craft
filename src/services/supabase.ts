@@ -29,12 +29,13 @@ export function getSupabaseConfigStatus(): SupabaseConfigStatus {
 
   if (
     rawUrl.includes('nama-proyek-anda.supabase.co') ||
-    rawAnonKey.includes('isi-dengan-anon-public-key')
+    rawAnonKey.includes('isi-dengan-anon-public-key') ||
+    rawUrl.includes('ocuclsbgvgwjujncst')
   ) {
     return {
       isConfigured: false,
       reason:
-        'Variabel di .env masih menggunakan teks contoh (placeholder) dari .env.example.',
+        'Kredensial Supabase belum terhubung ke database aktif. Menggunakan mode Brankas Lokal (Local Vault).',
       projectUrl: null,
     };
   }
