@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="TimeCraft — Kelola screen time, jaga waktu fokus, dan bangun kebiasaan digital yang sadar."
+    />
+    <meta name="theme-color" content="#FFFFFF" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <title>TimeCraft — Pengelolaan Screen Time & Fokus</title>
+    <!-- Font Inter & JetBrains Mono untuk keterbacaan angka dan teks -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root">
+      <div
+        id="file-protocol-notice"
+        style="
+          display: none;
+          min-height: 100vh;
+          background: #f3f6fb;
+          color: #111827;
+          font-family: system-ui, -apple-system, sans-serif;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+        "
+      >
+        <div
+          style="
+            max-width: 560px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 2rem;
+            line-height: 1.6;
+          "
+        >
+          <span
+            style="
+              display: inline-block;
+              background: #eff6ff;
+              color: #2563eb;
+              border: 1px solid #bfdbfe;
+              padding: 0.25rem 0.7rem;
+              border-radius: 999px;
+              font-size: 0.8rem;
+              font-weight: 600;
+              margin-bottom: 0.75rem;
+            "
+          >
+            Panduan Pemula TimeCraft
+          </span>
+          <h1 style="font-size: 1.35rem; margin: 0 0 0.75rem 0; color: #111827">
+            Halaman Dibuka Lewat File Explorer (<code>file://</code>)
+          </h1>
+          <p style="color: #6b7280; font-size: 0.92rem; margin-bottom: 1rem">
+            Proyek modern berbasis <strong>React + TypeScript + Vite</strong> tidak dapat dibuka langsung dengan klik dua kali pada file <code>index.html</code> karena browser membutuhkan server lokal (Vite) untuk menerjemahkan kode TypeScript (<code>.tsx</code>).
+          </p>
+          <div
+            style="
+              background: #f3f6fb;
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              padding: 1rem;
+              margin-bottom: 1.25rem;
+              font-size: 0.88rem;
+            "
+          >
+            <strong>Cara membuka TimeCraft yang benar:</strong>
+            <ol style="margin: 0.5rem 0 0 1.2rem; color: #6b7280">
+              <li>Pastikan perintah <code>npm run dev</code> sedang berjalan di terminal.</li>
+              <li>
+                Klik tombol di bawah ini untuk membuka alamat server lokal:
+              </li>
+            </ol>
+          </div>
+          <a
+            href="http://127.0.0.1:5173"
+            style="
+              display: inline-block;
+              background: #2563eb;
+              color: #ffffff;
+              font-weight: 600;
+              text-decoration: none;
+              padding: 0.7rem 1.25rem;
+              border-radius: 8px;
+              font-size: 0.92rem;
+            "
+          >
+            Buka TimeCraft di http://127.0.0.1:5173 →
+          </a>
+        </div>
+      </div>
+    </div>
+    <script>
+      if (window.location.protocol === 'file:') {
+        var notice = document.getElementById('file-protocol-notice');
+        if (notice) notice.style.display = 'flex';
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
