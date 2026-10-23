@@ -84,14 +84,27 @@ export const FloatingContactWidget: React.FC = () => {
         </div>
       )}
 
+      {/* Tooltip Kritik, Saran & Feedback (Muncul saat tombol disentuh / di-hover sebelum diklik) */}
+      {!isOpen && (
+        <div className="floating-trigger-tooltip" role="tooltip" aria-hidden="true">
+          <div className="trigger-tooltip-title">
+            <span className="tooltip-title-icon">💬</span>
+            <span>Feedback &amp; Masukan</span>
+          </div>
+          <div className="trigger-tooltip-desc">
+            Bagi Anda yang ingin memberikan masukan penggunaan website, silakan klik untuk menyampaikan <strong>kritik dan saran langsung kepada Author</strong>.
+          </div>
+        </div>
+      )}
+
       {/* Tombol Pemicu Mengambang di Pojok Kanan Bawah */}
       <button
         ref={triggerRef}
         type="button"
         className={`floating-contact-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen((prev) => !prev)}
-        title={isOpen ? 'Tutup Pilihan' : 'Hubungi WhatsApp & Instagram'}
-        aria-label="Buka kontak WhatsApp dan Instagram"
+        title="Beri feedback, kritik dan saran penggunaan website untuk Author"
+        aria-label="Buka kontak WhatsApp dan Instagram untuk kritik dan saran"
         aria-expanded={isOpen}
       >
         {isOpen ? (

@@ -2011,6 +2011,110 @@ code {
   border-color: #f472b6;
 }
 
+/* ============================================================================
+ * TOOLTIP HOVER TOMBOL CHAT (FEEDBACK, KRITIK & SARAN)
+ * ============================================================================ */
+
+.floating-trigger-tooltip {
+  position: absolute;
+  right: calc(100% + 14px);
+  bottom: 4px;
+  width: 250px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(8px);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+  z-index: 1002;
+}
+
+/* Panah segitiga tooltip yang mengarah ke tombol chat */
+.floating-trigger-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 16px;
+  right: -6px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 6px solid rgba(15, 23, 42, 0.96);
+}
+
+.trigger-tooltip-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+
+.tooltip-title-icon {
+  font-size: 13px;
+}
+
+.trigger-tooltip-desc {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.trigger-tooltip-desc strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Muncul secara mulus saat tombol pemicu disentuh / di-hover / di-focus */
+.floating-contact-root:hover .floating-trigger-tooltip,
+.floating-contact-trigger:focus-visible ~ .floating-trigger-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* Tema Terang */
+[data-theme="light"] .floating-trigger-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .floating-trigger-tooltip::after {
+  border-left-color: rgba(255, 255, 255, 0.98);
+}
+
+[data-theme="light"] .trigger-tooltip-title {
+  color: #2563eb;
+}
+
+[data-theme="light"] .trigger-tooltip-desc {
+  color: #475569;
+}
+
+[data-theme="light"] .trigger-tooltip-desc strong {
+  color: #0f172a;
+}
+
+@media (max-width: 480px) {
+  .floating-trigger-tooltip {
+    width: 200px;
+    padding: 8px 11px;
+    font-size: 10.5px;
+    right: calc(100% + 8px);
+  }
+}
+
 @media print {
   .floating-contact-root {
     display: none !important;
