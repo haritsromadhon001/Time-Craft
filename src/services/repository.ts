@@ -1202,16 +1202,7 @@ export class TimeCraftRepository {
   }
 
   async getClassroomsByTeacher(teacherId: string): Promise<Classroom[]> {
-    const listMap = new Map<string, Classroom>();
-
-    // 1. Ambil dari Local Vault terlebih dahulu
-    const vault = readLocalVault(this.customStore);
-    const localList = (vault.classrooms || []).filter((c) => c.teacher_id === teacherId);
-    for (const c of localList) {
-      listMap.set(c.id, c);
-    }
-
-    // 2. Ambil dari Supabase jika aktif
+    // 1. Ambil dari Supabase jika aktif (sumber data utama)
     if (this.isUsingSupabase() && supabase) {
       try {
         const { data, error } = await supabase
@@ -1221,21 +1212,24 @@ export class TimeCraftRepository {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          for (const c of data as Classroom[]) {
-            listMap.set(c.id, c);
-          }
+          // Sinkronkan Local Vault agar kelas yang dihapus tidak pernah muncul kembali
+          const vault = readLocalVault(this.customStore);
+          const otherClasses = (vault.classrooms || []).filter((c) => c.teacher_id !== teacherId);
+          vault.classrooms = [...otherClasses, ...(data as Classroom[])];
+          writeLocalVault(vault, this.customStore);
 
-          // Sinkronkan kelas lokal yang belum ada di Supabase
-          this.syncLocalClassroomsToSupabase(teacherId).catch(() => {});
+          return data as Classroom[];
         }
       } catch {
         // Fallback ke Local Vault
       }
     }
 
-    return Array.from(listMap.values()).sort(
-      (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
-    );
+    // 2. Fallback: Ambil dari Local Vault
+    const vault = readLocalVault(this.customStore);
+    return (vault.classrooms || [])
+      .filter((c) => c.teacher_id === teacherId)
+      .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   }
 
   async getClassroomsByStudent(studentId: string): Promise<Array<Classroom & { memberId: string; joinedAt: string }>> {
@@ -1366,18 +1360,7 @@ export class TimeCraftRepository {
   }
 
   async leaveClassroom(params: { memberId?: string; classroomId: string; studentId: string }): Promise<{ ok: boolean; message: string }> {
-    if (this.isUsingSupabase() && supabase) {
-      try {
-        const { error } = await supabase
-          .from('classroom_members')
-          .delete()
-          .eq('classroom_id', params.classroomId)
-          .eq('student_id', params.studentId);
-
-        if (!error) return { ok: true, message: 'Berhasil keluar dari kelas.' };
-      } catch {}
-    }
-
+    // 1. Selalu hapus dari Local Vault terlebih dahulu
     const vault = readLocalVault(this.customStore);
     if (vault.classroom_members) {
       vault.classroom_members = vault.classroom_members.filter(
@@ -1385,22 +1368,29 @@ export class TimeCraftRepository {
       );
       writeLocalVault(vault, this.customStore);
     }
+
+    // 2. Hapus dari Supabase jika aktif
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        if (params.memberId) {
+          await supabase.from('classroom_members').delete().eq('id', params.memberId);
+        } else {
+          await supabase
+            .from('classroom_members')
+            .delete()
+            .eq('classroom_id', params.classroomId)
+            .eq('student_id', params.studentId);
+        }
+      } catch (err) {
+        console.warn('Gagal menghapus keanggotaan kelas di Supabase:', err);
+      }
+    }
+
     return { ok: true, message: 'Berhasil keluar dari kelas.' };
   }
 
   async deleteClassroom(params: { classroomId: string; teacherId: string }): Promise<{ ok: boolean; message: string }> {
-    if (this.isUsingSupabase() && supabase) {
-      try {
-        const { error } = await supabase
-          .from('classrooms')
-          .delete()
-          .eq('id', params.classroomId)
-          .eq('teacher_id', params.teacherId);
-
-        if (!error) return { ok: true, message: 'Kelas berhasil dihapus.' };
-      } catch {}
-    }
-
+    // 1. Selalu bersihkan dari Local Vault terlebih dahulu agar tidak terbaca lagi secara lokal
     const vault = readLocalVault(this.customStore);
     if (vault.classrooms) {
       vault.classrooms = vault.classrooms.filter((c) => c.id !== params.classroomId);
@@ -1409,6 +1399,35 @@ export class TimeCraftRepository {
       vault.classroom_members = vault.classroom_members.filter((m) => m.classroom_id !== params.classroomId);
     }
     writeLocalVault(vault, this.customStore);
+
+    // 2. Bersihkan dari Supabase jika aktif
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        // Hapus relasi anggota terlebih dahulu agar tidak terkena foreign key constraint
+        await supabase
+          .from('classroom_members')
+          .delete()
+          .eq('classroom_id', params.classroomId);
+
+        // Hapus kelas berdasarkan id & teacher_id
+        const { error } = await supabase
+          .from('classrooms')
+          .delete()
+          .eq('id', params.classroomId)
+          .eq('teacher_id', params.teacherId);
+
+        if (error) {
+          // Fallback coba hapus hanya dengan id
+          await supabase
+            .from('classrooms')
+            .delete()
+            .eq('id', params.classroomId);
+        }
+      } catch (err) {
+        console.warn('Gagal menghapus kelas dari Supabase:', err);
+      }
+    }
+
     return { ok: true, message: 'Kelas berhasil dihapus.' };
   }
 
@@ -1626,16 +1645,7 @@ export class TimeCraftRepository {
   }
 
   async getFamilyGroupsByParent(parentId: string): Promise<FamilyGroup[]> {
-    const listMap = new Map<string, FamilyGroup>();
-
-    // 1. Ambil dari Local Vault
-    const vault = readLocalVault(this.customStore);
-    const localList = (vault.family_groups || []).filter((f) => f.parent_id === parentId);
-    for (const f of localList) {
-      listMap.set(f.id, f);
-    }
-
-    // 2. Ambil dari Supabase jika aktif
+    // 1. Ambil dari Supabase jika aktif (sumber data utama)
     if (this.isUsingSupabase() && supabase) {
       try {
         const { data, error } = await supabase
@@ -1645,17 +1655,22 @@ export class TimeCraftRepository {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          for (const f of data as FamilyGroup[]) {
-            listMap.set(f.id, f);
-          }
-          this.syncLocalFamiliesToSupabase(parentId).catch(() => {});
+          const vault = readLocalVault(this.customStore);
+          const otherFamilies = (vault.family_groups || []).filter((f) => f.parent_id !== parentId);
+          vault.family_groups = [...otherFamilies, ...(data as FamilyGroup[])];
+          writeLocalVault(vault, this.customStore);
+          return data as FamilyGroup[];
         }
-      } catch {}
+      } catch {
+        // Fallback ke Local Vault
+      }
     }
 
-    return Array.from(listMap.values()).sort(
-      (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
-    );
+    // 2. Fallback: Ambil dari Local Vault
+    const vault = readLocalVault(this.customStore);
+    return (vault.family_groups || [])
+      .filter((f) => f.parent_id === parentId)
+      .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   }
 
   async getFamilyGroupsByChild(childId: string): Promise<Array<FamilyGroup & { memberId: string; joinedAt: string }>> {
@@ -1783,18 +1798,7 @@ export class TimeCraftRepository {
   }
 
   async leaveFamilyGroup(params: { familyId: string; childId: string }): Promise<{ ok: boolean; message: string }> {
-    if (this.isUsingSupabase() && supabase) {
-      try {
-        const { error } = await supabase
-          .from('family_members')
-          .delete()
-          .eq('family_id', params.familyId)
-          .eq('child_id', params.childId);
-
-        if (!error) return { ok: true, message: 'Berhasil memutuskan hubungan dari ruang keluarga.' };
-      } catch {}
-    }
-
+    // 1. Selalu bersihkan dari Local Vault terlebih dahulu
     const vault = readLocalVault(this.customStore);
     if (vault.family_members) {
       vault.family_members = vault.family_members.filter(
@@ -1802,22 +1806,25 @@ export class TimeCraftRepository {
       );
       writeLocalVault(vault, this.customStore);
     }
+
+    // 2. Bersihkan dari Supabase jika aktif
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        await supabase
+          .from('family_members')
+          .delete()
+          .eq('family_id', params.familyId)
+          .eq('child_id', params.childId);
+      } catch (err) {
+        console.warn('Gagal memutuskan hubungan keluarga di Supabase:', err);
+      }
+    }
+
     return { ok: true, message: 'Berhasil memutuskan hubungan dari ruang keluarga.' };
   }
 
   async deleteFamilyGroup(params: { familyId: string; parentId: string }): Promise<{ ok: boolean; message: string }> {
-    if (this.isUsingSupabase() && supabase) {
-      try {
-        const { error } = await supabase
-          .from('family_groups')
-          .delete()
-          .eq('id', params.familyId)
-          .eq('parent_id', params.parentId);
-
-        if (!error) return { ok: true, message: 'Ruang keluarga berhasil dihapus.' };
-      } catch {}
-    }
-
+    // 1. Selalu bersihkan dari Local Vault terlebih dahulu
     const vault = readLocalVault(this.customStore);
     if (vault.family_groups) {
       vault.family_groups = vault.family_groups.filter((f) => f.id !== params.familyId);
@@ -1826,6 +1833,32 @@ export class TimeCraftRepository {
       vault.family_members = vault.family_members.filter((m) => m.family_id !== params.familyId);
     }
     writeLocalVault(vault, this.customStore);
+
+    // 2. Bersihkan dari Supabase jika aktif
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        await supabase
+          .from('family_members')
+          .delete()
+          .eq('family_id', params.familyId);
+
+        const { error } = await supabase
+          .from('family_groups')
+          .delete()
+          .eq('id', params.familyId)
+          .eq('parent_id', params.parentId);
+
+        if (error) {
+          await supabase
+            .from('family_groups')
+            .delete()
+            .eq('id', params.familyId);
+        }
+      } catch (err) {
+        console.warn('Gagal menghapus ruang keluarga di Supabase:', err);
+      }
+    }
+
     return { ok: true, message: 'Ruang keluarga berhasil dihapus.' };
   }
 

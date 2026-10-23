@@ -288,10 +288,18 @@ export const ClassroomPage: React.FC = () => {
         'Seluruh siswa yang terdaftar akan terlepas dari kelas ini. Data aktivitas masing-masing siswa tidak akan hilang, namun rekap kelas ini akan dihapus permanen.',
       onConfirm: async () => {
         if (!user) return;
-        await repository.deleteClassroom({ classroomId: cls.id, teacherId: user.id });
-        setSelectedClass(null);
+        // Optimistic UI: langsung singkirkan kelas dari antarmuka seketika
+        setTeacherClasses((prev) => prev.filter((c) => c.id !== cls.id));
+        if (selectedClass?.id === cls.id) {
+          setSelectedClass(null);
+        }
         setConfirmDialog((prev) => ({ ...prev, open: false }));
-        setFeedbackMsg({ type: 'success', text: `Kelas "${cls.class_name}" telah dihapus.` });
+        try {
+          await repository.deleteClassroom({ classroomId: cls.id, teacherId: user.id });
+          setFeedbackMsg({ type: 'success', text: `Kelas "${cls.class_name}" telah dihapus.` });
+        } catch {
+          setFeedbackMsg({ type: 'error', text: `Gagal menghapus kelas "${cls.class_name}".` });
+        }
         await loadTeacherData();
       },
     });
@@ -305,13 +313,18 @@ export const ClassroomPage: React.FC = () => {
         'Anda akan keluar dari kelas ini. Guru tidak lagi dapat melihat rekap screen time dan sesi fokus Anda dari kelas ini.',
       onConfirm: async () => {
         if (!user) return;
-        await repository.leaveClassroom({
-          classroomId: cls.id,
-          studentId: user.id,
-          memberId: cls.memberId,
-        });
+        setStudentClasses((prev) => prev.filter((c) => c.id !== cls.id));
         setConfirmDialog((prev) => ({ ...prev, open: false }));
-        setFeedbackMsg({ type: 'success', text: `Anda telah keluar dari kelas "${cls.class_name}".` });
+        try {
+          await repository.leaveClassroom({
+            classroomId: cls.id,
+            studentId: user.id,
+            memberId: cls.memberId,
+          });
+          setFeedbackMsg({ type: 'success', text: `Anda telah keluar dari kelas "${cls.class_name}".` });
+        } catch {
+          setFeedbackMsg({ type: 'error', text: `Gagal keluar dari kelas "${cls.class_name}".` });
+        }
         await loadStudentData();
       },
     });
@@ -325,10 +338,17 @@ export const ClassroomPage: React.FC = () => {
         'Seluruh anggota keluarga yang terhubung akan terlepas. Data aktivitas anak tidak akan hilang, namun ruang pemantauan ini akan dihapus permanen.',
       onConfirm: async () => {
         if (!user) return;
-        await repository.deleteFamilyGroup({ familyId: fam.id, parentId: user.id });
-        setSelectedFamily(null);
+        setParentFamilies((prev) => prev.filter((f) => f.id !== fam.id));
+        if (selectedFamily?.id === fam.id) {
+          setSelectedFamily(null);
+        }
         setConfirmDialog((prev) => ({ ...prev, open: false }));
-        setFeedbackMsg({ type: 'success', text: `Ruang keluarga "${fam.family_name}" telah dihapus.` });
+        try {
+          await repository.deleteFamilyGroup({ familyId: fam.id, parentId: user.id });
+          setFeedbackMsg({ type: 'success', text: `Ruang keluarga "${fam.family_name}" telah dihapus.` });
+        } catch {
+          setFeedbackMsg({ type: 'error', text: `Gagal menghapus ruang keluarga "${fam.family_name}".` });
+        }
         await loadParentFamilyData();
       },
     });
@@ -342,12 +362,17 @@ export const ClassroomPage: React.FC = () => {
         'Anda akan keluar dari ruang keluarga ini. Orang tua tidak lagi dapat memantau laporan waktu layar Anda dari ruang ini.',
       onConfirm: async () => {
         if (!user) return;
-        await repository.leaveFamilyGroup({
-          familyId: fam.id,
-          childId: user.id,
-        });
+        setChildFamilies((prev) => prev.filter((f) => f.id !== fam.id));
         setConfirmDialog((prev) => ({ ...prev, open: false }));
-        setFeedbackMsg({ type: 'success', text: `Anda telah keluar dari ruang keluarga "${fam.family_name}".` });
+        try {
+          await repository.leaveFamilyGroup({
+            familyId: fam.id,
+            childId: user.id,
+          });
+          setFeedbackMsg({ type: 'success', text: `Anda telah keluar dari ruang keluarga "${fam.family_name}".` });
+        } catch {
+          setFeedbackMsg({ type: 'error', text: `Gagal memutuskan hubungan dari ruang keluarga.` });
+        }
         await loadChildFamilyData();
       },
     });
