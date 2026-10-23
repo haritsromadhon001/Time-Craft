@@ -1890,186 +1890,125 @@ code {
   border: 2px solid #090b10;
 }
 
-.floating-contact-popover {
+/* ============================================================================
+ * SPEED-DIAL IKON KONTAK MENGAMBANG (WhatsApp & Instagram)
+ * ============================================================================ */
+
+.floating-social-speeddial {
   position: absolute;
   bottom: 64px;
-  right: 0;
-  width: 350px;
-  max-width: calc(100vw - 32px);
-  background-color: #121722;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 8px 16px -6px rgba(0, 0, 0, 0.45);
-  padding: 10px 12px 14px;
+  right: 2px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  animation: popoverFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 12px;
+  align-items: flex-end;
+  z-index: 1001;
+  animation: speedDialEntrance 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: bottom right;
 }
 
-.floating-contact-popover .dev-contact-container {
-  padding: 0.5rem 0.2rem 0;
-  box-shadow: none;
-  background: transparent;
-  border: none;
-}
-
-.floating-contact-popover .dev-contact-container::before {
-  display: none;
-}
-
-@keyframes popoverFadeIn {
+@keyframes speedDialEntrance {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(8px);
+    transform: translateY(12px) scale(0.9);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-.contact-popover-header {
+.floating-social-action {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.contact-header-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background-color: var(--surface-blue-light);
-  border: 1px solid var(--border-blue-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.contact-popover-title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.contact-popover-subtitle {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.contact-popover-close {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  border-radius: 4px;
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color var(--transition-fast), background-color var(--transition-fast);
-}
-
-.contact-popover-close:hover {
-  color: var(--text-primary);
-  background-color: var(--bg-secondary);
-}
-
-.contact-card-box {
-  background-color: #161c28;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 10px 11px;
-  transition: border-color var(--transition-fast);
-}
-
-.contact-card-box:hover {
-  border-color: var(--border-blue-subtle);
-}
-
-.contact-card-top {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.contact-icon-bubble {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background-color: var(--surface-blue-light);
-  border: 1px solid var(--border-blue-subtle);
-  color: var(--primary-blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.contact-meta-box {
-  min-width: 0;
-}
-
-.contact-channel-name {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.contact-channel-value {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-}
-
-.contact-actions-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.btn-contact-action {
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 5px 8px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  cursor: pointer;
+  gap: 10px;
   text-decoration: none;
-  transition: all var(--transition-fast);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease;
 }
 
-.btn-contact-primary {
-  background-color: var(--primary-blue);
+.floating-social-label {
+  background: rgba(18, 23, 34, 0.94);
   color: #ffffff;
-  border: 1px solid var(--primary-blue-hover);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.btn-contact-primary:hover {
-  background-color: var(--primary-blue-hover);
-}
-
-.btn-contact-secondary {
-  background-color: var(--surface-blue-light);
-  color: var(--primary-blue);
-  border: 1px solid var(--border-blue-subtle);
-}
-
-.btn-contact-secondary:hover {
-  background-color: #38181e;
+.floating-social-icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+
+/* WhatsApp Icon Button */
+.wa-btn {
+  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.floating-social-action.item-wa:hover .wa-btn,
+.floating-social-action.item-wa:focus-visible .wa-btn {
+  transform: scale(1.12);
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.65), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.floating-social-action.item-wa:hover .floating-social-label {
+  transform: translateX(-4px);
+  border-color: rgba(37, 211, 102, 0.5);
+  background: rgba(18, 38, 28, 0.96);
+  box-shadow: 0 4px 18px rgba(37, 211, 102, 0.25);
+}
+
+/* Instagram Icon Button */
+.ig-btn {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  box-shadow: 0 4px 16px rgba(220, 39, 67, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.floating-social-action.item-ig:hover .ig-btn,
+.floating-social-action.item-ig:focus-visible .ig-btn {
+  transform: scale(1.12);
+  box-shadow: 0 8px 24px rgba(220, 39, 67, 0.65), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.floating-social-action.item-ig:hover .floating-social-label {
+  transform: translateX(-4px);
+  border-color: rgba(220, 39, 67, 0.5);
+  background: rgba(38, 18, 28, 0.96);
+  box-shadow: 0 4px 18px rgba(220, 39, 67, 0.25);
+}
+
+[data-theme="light"] .floating-social-label {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .floating-social-action.item-wa:hover .floating-social-label {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+[data-theme="light"] .floating-social-action.item-ig:hover .floating-social-label {
+  background: #fdf2f8;
+  border-color: #f472b6;
 }
 
 @media print {
