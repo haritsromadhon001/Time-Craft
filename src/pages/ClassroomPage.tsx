@@ -14,6 +14,7 @@ import {
   Timer,
   Info,
   X,
+  Database,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { repository } from '../services/repository';
@@ -38,6 +39,8 @@ export const ClassroomPage: React.FC = () => {
   const [newClassDesc, setNewClassDesc] = useState('');
   const [creatingClass, setCreatingClass] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSqlGuideModal, setShowSqlGuideModal] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   // State Siswa
   const [studentClasses, setStudentClasses] = useState<Array<Classroom & { memberId: string; joinedAt: string }>>([]);
@@ -61,11 +64,14 @@ export const ClassroomPage: React.FC = () => {
   });
 
   // Notifikasi Feedback
-  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const loadTeacherData = useCallback(async () => {
     if (!user) return;
+    try {
+      await repository.syncLocalClassroomsToSupabase(user.id);
+    } catch {}
     const classes = await repository.getClassroomsByTeacher(user.id);
     setTeacherClasses(classes);
   }, [user]);
@@ -107,10 +113,16 @@ export const ClassroomPage: React.FC = () => {
 
       if (res.error) {
         setFeedbackMsg({ type: 'error', text: res.error });
+      } else if (res.warning) {
+        setFeedbackMsg({ type: 'warning', text: res.warning });
+        setNewClassName('');
+        setNewClassDesc('');
+        setShowCreateModal(false);
+        await loadTeacherData();
       } else {
         setFeedbackMsg({
           type: 'success',
-          text: `Kelas "${newClassName}" berhasil dibuat! Bagikan kode kelas kepada murid Anda.`,
+          text: `Kelas "${newClassName}" berhasil dibuat di database cloud! Bagikan kode kelas kepada murid Anda.`,
         });
         setNewClassName('');
         setNewClassDesc('');
@@ -124,14 +136,15 @@ export const ClassroomPage: React.FC = () => {
 
   const handleJoinClass = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !joinCodeInput.trim()) return;
+    const cleanCode = joinCodeInput.replace(/\s+/g, '').toUpperCase();
+    if (!user || !cleanCode) return;
 
     setJoiningClass(true);
     setFeedbackMsg(null);
     try {
       const res = await repository.joinClassroomByCode({
         studentId: user.id,
-        classCode: joinCodeInput,
+        classCode: cleanCode,
         studentName: user.display_name,
         studentEmail: user.email,
       });
@@ -145,6 +158,108 @@ export const ClassroomPage: React.FC = () => {
       }
     } finally {
       setJoiningClass(false);
+    }
+  };
+
+  const SUPABASE_CLASSROOM_SQL = `-- ============================================================================
+-- TIMECRAFT: MIGRATION KELAS MULTI-PERANGKAT (SUPABASE)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.classrooms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  class_code TEXT NOT NULL UNIQUE CHECK (char_length(trim(class_code)) >= 4),
+  class_name TEXT NOT NULL CHECK (char_length(trim(class_name)) >= 2),
+  description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.classroom_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  classroom_id UUID NOT NULL REFERENCES public.classrooms(id) ON DELETE CASCADE,
+  student_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  student_name TEXT NOT NULL,
+  student_email TEXT NOT NULL,
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT unique_student_per_class UNIQUE (classroom_id, student_id)
+);
+
+ALTER TABLE public.classrooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.classroom_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Semua pengguna terotentikasi dapat melihat kelas" ON public.classrooms;
+CREATE POLICY "Semua pengguna terotentikasi dapat melihat kelas"
+  ON public.classrooms FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Guru dapat membuat kelas baru" ON public.classrooms;
+CREATE POLICY "Guru dapat membuat kelas baru"
+  ON public.classrooms FOR INSERT TO authenticated WITH CHECK (teacher_id = auth.uid());
+
+DROP POLICY IF EXISTS "Guru dapat mengubah kelas miliknya" ON public.classrooms;
+CREATE POLICY "Guru dapat mengubah kelas miliknya"
+  ON public.classrooms FOR UPDATE TO authenticated USING (teacher_id = auth.uid());
+
+DROP POLICY IF EXISTS "Guru dapat menghapus kelas miliknya" ON public.classrooms;
+CREATE POLICY "Guru dapat menghapus kelas miliknya"
+  ON public.classrooms FOR DELETE TO authenticated USING (teacher_id = auth.uid());
+
+DROP POLICY IF EXISTS "Siswa dan guru dapat melihat anggota kelas" ON public.classroom_members;
+CREATE POLICY "Siswa dan guru dapat melihat anggota kelas"
+  ON public.classroom_members FOR SELECT TO authenticated
+  USING (
+    student_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM public.classrooms c WHERE c.id = classroom_members.classroom_id AND c.teacher_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Siswa dapat bergabung ke kelas" ON public.classroom_members;
+CREATE POLICY "Siswa dapat bergabung ke kelas"
+  ON public.classroom_members FOR INSERT TO authenticated WITH CHECK (student_id = auth.uid());
+
+DROP POLICY IF EXISTS "Siswa atau guru dapat keluar/menghapus anggota kelas" ON public.classroom_members;
+CREATE POLICY "Siswa atau guru dapat keluar/menghapus anggota kelas"
+  ON public.classroom_members FOR DELETE TO authenticated
+  USING (
+    student_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM public.classrooms c WHERE c.id = classroom_members.classroom_id AND c.teacher_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "screen_time_select_teacher" ON public.screen_time_logs;
+CREATE POLICY "screen_time_select_teacher" ON public.screen_time_logs FOR SELECT TO authenticated
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM public.classroom_members m
+      JOIN public.classrooms c ON c.id = m.classroom_id
+      WHERE m.student_id = screen_time_logs.user_id AND c.teacher_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "focus_sessions_select_teacher" ON public.focus_sessions;
+CREATE POLICY "focus_sessions_select_teacher" ON public.focus_sessions FOR SELECT TO authenticated
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM public.classroom_members m
+      JOIN public.classrooms c ON c.id = m.classroom_id
+      WHERE m.student_id = focus_sessions.user_id AND c.teacher_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "user_targets_select_teacher" ON public.user_targets;
+CREATE POLICY "user_targets_select_teacher" ON public.user_targets FOR SELECT TO authenticated
+  USING (
+    auth.uid() = user_id OR
+    EXISTS (
+      SELECT 1 FROM public.classroom_members m
+      JOIN public.classrooms c ON c.id = m.classroom_id
+      WHERE m.student_id = user_targets.user_id AND c.teacher_id = auth.uid()
+    )
+  );`;
+
+  const handleCopySql = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(SUPABASE_CLASSROOM_SQL);
+      setCopiedSql(true);
+      setTimeout(() => setCopiedSql(false), 3000);
     }
   };
 
@@ -524,6 +639,107 @@ export const ClassroomPage: React.FC = () => {
         </div>
       )}
 
+      {/* Modal Panduan Aktivasi Database Supabase (Multi-Perangkat) */}
+      {showSqlGuideModal && (
+        <div className="modal-overlay" onClick={() => setShowSqlGuideModal(false)}>
+          <div
+            className="modal-card"
+            style={{ maxWidth: '640px', width: '92%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="icon-box-blue"><Database size={18} /></span>
+                <h3 className="modal-title">Aktivasi Sinkronisasi Multi-Perangkat (Supabase SQL)</h3>
+              </div>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setShowSqlGuideModal(false)}
+                aria-label="Tutup"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1rem' }}>
+              <p style={{ margin: '0 0 0.75rem' }}>
+                Agar kode kelas yang dibuat guru di laptop dapat langsung ditemukan dan diikuti murid di ponsel (HP), tabel database kelas perlu dibuat satu kali di Supabase Anda:
+              </p>
+              <ol style={{ paddingLeft: '1.25rem', margin: '0 0 1rem' }}>
+                <li>Buka dashboard <strong>Supabase</strong> proyek Anda di peramban.</li>
+                <li>Klik menu <strong>SQL Editor</strong> di bilah navigasi kiri.</li>
+                <li>Klik tombol <strong>"New Query"</strong>, tempelkan (paste) kode SQL di bawah ini, lalu klik <strong>Run</strong>.</li>
+              </ol>
+            </div>
+
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'var(--surface-hover)',
+                  padding: '0.45rem 0.75rem',
+                  borderTopLeftRadius: 'var(--radius-sm)',
+                  borderTopRightRadius: 'var(--radius-sm)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <span>Script Migrasi SQL (Tabel Classrooms &amp; Anggota)</span>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCopySql}
+                  style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                >
+                  {copiedSql ? <Check size={13} color="#16a34a" /> : <Copy size={13} />}
+                  <span>{copiedSql ? 'Tersalin ke Clipboard!' : 'Salin Kode SQL'}</span>
+                </button>
+              </div>
+              <pre
+                style={{
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  margin: 0,
+                  padding: '0.85rem',
+                  backgroundColor: '#090d16',
+                  color: '#e2e8f0',
+                  fontSize: '0.74rem',
+                  fontFamily: 'var(--font-mono)',
+                  borderBottomLeftRadius: 'var(--radius-sm)',
+                  borderBottomRightRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-subtle)',
+                  whiteSpace: 'pre',
+                }}
+              >
+                {SUPABASE_CLASSROOM_SQL}
+              </pre>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCopySql}
+              >
+                {copiedSql ? <Check size={16} /> : <Copy size={16} />}
+                <span>{copiedSql ? 'Berhasil Disalin!' : 'Salin Seluruh Kode SQL'}</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowSqlGuideModal(false)}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Halaman Utama */}
       <header className="page-header">
         <div>
@@ -534,7 +750,16 @@ export const ClassroomPage: React.FC = () => {
         </div>
 
         {activeTab === 'teacher' && !selectedClass && (
-          <div className="page-actions">
+          <div className="page-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowSqlGuideModal(true)}
+              title="Panduan sinkronisasi Supabase untuk akses Laptop & HP"
+            >
+              <Database size={16} color="var(--primary-blue)" />
+              <span>Sinkronisasi Cloud (SQL)</span>
+            </button>
             <button
               type="button"
               className="btn btn-primary"
@@ -550,19 +775,39 @@ export const ClassroomPage: React.FC = () => {
       {/* Banner Feedback Pesan */}
       {feedbackMsg && (
         <div
-          className={`alert ${feedbackMsg.type === 'success' ? 'alert-success' : 'alert-error'}`}
+          className={`alert ${
+            feedbackMsg.type === 'success'
+              ? 'alert-success'
+              : feedbackMsg.type === 'warning'
+                ? 'alert-warning'
+                : 'alert-error'
+          }`}
           role="status"
           style={{ marginBottom: '1.25rem' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
             <span>{feedbackMsg.text}</span>
-            <button
-              type="button"
-              onClick={() => setFeedbackMsg(null)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
-            >
-              ✕
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+              {feedbackMsg.type === 'warning' && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowSqlGuideModal(true)}
+                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                >
+                  <Database size={13} />
+                  <span>Buka Panduan SQL</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setFeedbackMsg(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                aria-label="Tutup notifikasi"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1031,9 +1276,9 @@ export const ClassroomPage: React.FC = () => {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Masukkan Kode Kelas (contoh: TC-7B9A)"
+                  placeholder="Masukkan Kode Kelas (contoh: TC-8XJR)"
                   value={joinCodeInput}
-                  onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
+                  onChange={(e) => setJoinCodeInput(e.target.value.replace(/\s+/g, '').toUpperCase())}
                   required
                   style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
                 />
