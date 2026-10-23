@@ -2012,12 +2012,14 @@ code {
 
 /* ============================================================================
  * JAM KLIEN REAL-TIME (LIVE CLIENT CLOCK WIDGET)
- * ============================================================================ .live-clock-widget {
+ * ============================================================================ */
+
+.live-clock-widget {
   display: flex;
   flex-direction: column;
   justify-content: center;
   border-radius: var(--radius-lg);
-  padding: 0.65rem 1rem;
+  padding: 0.65rem 1.15rem;
   min-width: 220px;
   background-color: var(--surface-card);
   border: 1px solid var(--border-subtle);
@@ -2027,14 +2029,14 @@ code {
 
 :root .live-clock-widget,
 [data-theme="dark"] .live-clock-widget {
-  background: linear-gradient(135deg, #121722 0%, #0d1117 100%);
-  border-color: #242d3d;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  background: #121722;
+  border: 1px solid #242d3d;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
 }
 
 [data-theme="light"] .live-clock-widget {
   background: #ffffff;
-  border-color: #e2e8f0;
+  border: 1px solid #e2e8f0;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
 
