@@ -10,6 +10,9 @@ import {
   Upload,
   Download,
   Laptop,
+  Palette,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { repository } from '../services/repository';
@@ -50,7 +53,7 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 export const SettingsPage: React.FC = () => {
-  const { user, refreshUserData } = useApp();
+  const { user, refreshUserData, theme, setTheme } = useApp();
 
   const [displayName, setDisplayName] = useState(user?.display_name ?? '');
   const [timezone, setTimezone] = useState(user?.timezone ?? 'Asia/Jakarta');
@@ -259,6 +262,141 @@ export const SettingsPage: React.FC = () => {
       )}
 
       <div className="grid-2">
+        {/* Pilihan Tema Tampilan */}
+        <section className="card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card-header">
+            <div>
+              <h2 className="card-title">Pilihan Tema Tampilan</h2>
+              <p className="card-description">
+                Sesuaikan kenyamanan mata Anda: pilih tema gelap dengan logo merah atau tema terang dengan logo biru.
+              </p>
+            </div>
+            <span className="icon-box-blue" aria-hidden="true">
+              <Palette size={18} />
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            {/* Opsi Tema Gelap (Hitam & Logo Merah) */}
+            <div
+              onClick={() => setTheme('dark')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setTheme('dark');
+              }}
+              style={{
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.15rem',
+                border: theme === 'dark' ? '2px solid var(--primary-red)' : '1px solid var(--border-color)',
+                backgroundColor: '#121216',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <img
+                src="/logo-red.svg"
+                alt="Logo Merah"
+                width={46}
+                height={46}
+                style={{ borderRadius: '10px', flexShrink: 0 }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.25rem' }}>
+                  <Moon size={16} color="#EF4444" />
+                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F8FAFC' }}>
+                    Tema Hitam (Obsidian Black)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0, lineHeight: 1.4 }}>
+                  Latar gelap pekat, ramah untuk mata di malam hari, aksen merah kirmizi dengan logo jam merah.
+                </p>
+              </div>
+              {theme === 'dark' && (
+                <span
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    color: '#EF4444',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  Aktif
+                </span>
+              )}
+            </div>
+
+            {/* Opsi Tema Putih (Putih & Logo Biru) */}
+            <div
+              onClick={() => setTheme('light')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setTheme('light');
+              }}
+              style={{
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.15rem',
+                border: theme === 'light' ? '2px solid var(--primary-blue)' : '1px solid var(--border-color)',
+                backgroundColor: '#FFFFFF',
+                boxShadow: theme === 'light' ? '0 4px 14px rgba(37, 99, 235, 0.12)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <img
+                src="/logo-blue.svg"
+                alt="Logo Biru"
+                width={46}
+                height={46}
+                style={{ borderRadius: '10px', flexShrink: 0 }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.25rem' }}>
+                  <Sun size={16} color="#2563EB" />
+                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0F172A' }}>
+                    Tema Putih (Clean White)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, lineHeight: 1.4 }}>
+                  Latar putih bersih dan jernih, tipografi tajam, aksen biru elegan dengan logo jam biru.
+                </p>
+              </div>
+              {theme === 'light' && (
+                <span
+                  style={{
+                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                    color: '#2563EB',
+                    border: '1px solid rgba(37, 99, 235, 0.3)',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  Aktif
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* Form Profil & Zona Waktu */}
         <section className="card">
           <div className="card-header">

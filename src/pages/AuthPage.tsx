@@ -9,6 +9,8 @@ import {
   KeyRound,
   CheckCircle2,
   Upload,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { repository } from '../services/repository';
 import { getDetectedTimezone } from '../utils/time';
@@ -27,7 +29,7 @@ const COMMON_TIMEZONES = [
 ];
 
 export const AuthPage: React.FC = () => {
-  const { refreshUserData } = useApp();
+  const { refreshUserData, theme, toggleTheme } = useApp();
   const detectedTz = getDetectedTimezone();
 
   const [mode, setMode] = useState<AuthMode>('login');
@@ -147,25 +149,38 @@ export const AuthPage: React.FC = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.85rem',
+            justifyContent: 'space-between',
             marginBottom: '1.35rem',
           }}
         >
-          <img
-            src="/favicon.svg"
-            alt="Logo TimeCraft"
-            width={42}
-            height={42}
-            style={{ borderRadius: '10px', flexShrink: 0 }}
-          />
-          <div>
-            <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              TimeCraft
-            </h1>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-              Kelola waktu layar dan sesi fokus harian Anda
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <img
+              src={theme === 'light' ? '/logo-blue.svg' : '/logo-red.svg'}
+              alt="Logo TimeCraft"
+              width={42}
+              height={42}
+              style={{ borderRadius: '10px', flexShrink: 0 }}
+            />
+            <div>
+              <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                TimeCraft
+              </h1>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                Kelola waktu layar dan sesi fokus harian Anda
+              </p>
+            </div>
           </div>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={toggleTheme}
+            title={theme === 'light' ? 'Beralih ke Tema Hitam (Merah)' : 'Beralih ke Tema Putih (Biru)'}
+            aria-label="Ganti Tema Tampilan"
+            style={{ padding: '0.45rem 0.6rem', flexShrink: 0 }}
+          >
+            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
         </div>
 
         {/* Pilihan Tab Login / Registrasi atau Header Ganti Kata Sandi */}

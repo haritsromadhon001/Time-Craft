@@ -8,6 +8,8 @@ import {
 } from '../types/domain';
 import { repository } from '../services/repository';
 
+export type AppTheme = 'dark' | 'light';
+
 interface AppContextValue {
   user: UserProfile | null;
   loadingAuth: boolean;
@@ -19,6 +21,9 @@ interface AppContextValue {
   reflections: WeeklyReflection[];
   refreshUserData: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
+  theme: AppTheme;
+  setTheme: (t: AppTheme) => void;
+  toggleTheme: () => void;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -33,6 +38,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [focusSessions, setFocusSessions] = useState<FocusSession[]>([]);
   const [target, setTarget] = useState<UserTarget | null>(null);
   const [reflections, setReflections] = useState<WeeklyReflection[]>([]);
+
+  const [theme, setThemeState] = useState<AppTheme>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('timecraft_theme') as AppTheme | null;
+      if (stored === 'light' || stored === 'dark') return stored;
+    }
+    return 'dark';
+  });
+
+  const setTheme = useCallback((t: AppTheme) => {
+    setThemeState(t);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('timecraft_theme', t);
+      document.documentElement.setAttribute('data-theme', t);
+      const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+      if (link) {
+        link.href = t === 'light' ? '/logo-blue.svg' : '/logo-red.svg';
+      }
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }, [theme, setTheme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+    if (link) {
+      link.href = theme === 'light' ? '/logo-blue.svg' : '/logo-red.svg';
+    }
+  }, [theme]);
 
   const loadDataForUser = useCallback(async (activeUser: UserProfile) => {
     setLoadingData(true);
@@ -116,6 +153,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         reflections,
         refreshUserData,
         setUser,
+        theme,
+        setTheme,
+        toggleTheme,
       }}
     >
       {children}

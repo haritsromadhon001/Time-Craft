@@ -11,7 +11,8 @@
  * - Border: #242D3D (Crisp Defined Separation)
  * ============================================================================ */
 
-:root {
+:root,
+[data-theme="dark"] {
   /* Backgrounds & Surfaces (Tema Hitam / Midnight Black Dark Theme) */
   --bg-primary: #090b10;
   --bg-secondary: #0d1117;
@@ -71,6 +72,58 @@
   --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-focus: 0 0 0 3px rgba(239, 68, 68, 0.35);
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  color-scheme: dark;
+}
+
+/* ============================================================================
+ * TIMECRAFT — TEMA PUTIH & LOGO BIRU (CLEAN WHITE & ROYAL BLUE THEME)
+ * ============================================================================ */
+
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f6fb;
+  --surface-card: #ffffff;
+  --surface-elevated: #f8fafc;
+  --surface-blue-light: #eff6ff;
+  --surface-hover: #f1f5f9;
+  --surface-input: #ffffff;
+
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus: #2563eb;
+  --border-blue-subtle: #bfdbfe;
+
+  --primary-blue: #2563eb;
+  --primary-blue-hover: #1d4ed8;
+  --primary-blue-surface: #eff6ff;
+  --secondary-blue-chart: #60a5fa;
+
+  --accent-teal: #2563eb;
+  --accent-teal-hover: #1d4ed8;
+  --accent-teal-muted: #eff6ff;
+  --accent-teal-border: #bfdbfe;
+
+  --status-success: #16a34a;
+  --status-success-bg: #f0fdf4;
+  --status-success-border: #bbf7d0;
+  --status-warning: #d97706;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-danger: #dc2626;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #fecaca;
+  --status-info: #2563eb;
+  --status-info-bg: #eff6ff;
+  --status-info-border: #bfdbfe;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-on-accent: #ffffff;
+
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  color-scheme: light;
 }
 
 /* Reset & Base Typography */
@@ -2399,5 +2452,292 @@ code {
   color: var(--primary-blue);
   letter-spacing: 0.05em;
 }
+
+/* ============================================================================
+ * OVERRIDES KHUSUS TEMA PUTIH & LOGO BIRU (LIGHT THEME SPECIFIC OVERRIDES)
+ * ============================================================================ */
+
+[data-theme="light"] body {
+  background-color: #f3f6fb;
+  color: #0f172a;
+}
+
+[data-theme="light"] .card-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .card-description {
+  color: #475569;
+}
+
+[data-theme="light"] .brand-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .brand-subtitle {
+  color: #2563eb;
+}
+
+[data-theme="light"] .mobile-header {
+  background-color: #ffffff;
+  border-bottom-color: #e2e8f0;
+}
+
+[data-theme="light"] .mobile-header-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .mobile-header-subtitle {
+  color: #2563eb;
+}
+
+[data-theme="light"] .btn-secondary {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .btn-secondary:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .stat-card-value {
+  color: #0f172a;
+}
+
+[data-theme="light"] .stat-card-value.empty {
+  color: #64748b;
+}
+
+[data-theme="light"] .stat-card-header {
+  color: #475569;
+}
+
+[data-theme="light"] .nav-item {
+  color: #475569;
+}
+
+[data-theme="light"] .nav-item:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+[data-theme="light"] .nav-item:hover svg {
+  color: #2563eb;
+}
+
+[data-theme="light"] .nav-item.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+[data-theme="light"] .nav-item.active svg {
+  color: #2563eb;
+}
+
+[data-theme="light"] .icon-box-blue {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+[data-theme="light"] .chart-container-box {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .chart-val-badge {
+  color: #0f172a;
+}
+
+[data-theme="light"] .chart-axis-line {
+  background-color: #cbd5e1;
+}
+
+[data-theme="light"] .chart-empty-slot {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+[data-theme="light"] .chart-bar-stack {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+[data-theme="light"] .chart-seg-timer {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+}
+
+[data-theme="light"] .chart-seg-manual {
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%);
+}
+
+[data-theme="light"] .chart-day-name {
+  color: #475569;
+}
+
+[data-theme="light"] .chart-day-name.active {
+  color: #0f172a;
+}
+
+[data-theme="light"] .chart-legend-box {
+  color: #475569;
+  border-top-color: #e2e8f0;
+}
+
+[data-theme="light"] .legend-timer {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #1d4ed8;
+}
+
+[data-theme="light"] .legend-manual {
+  background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%);
+  border-color: #60a5fa;
+}
+
+[data-theme="light"] .legend-empty {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .live-clock-badge {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="light"] .live-clock-date {
+  color: #475569;
+}
+
+[data-theme="light"] .live-clock-compact {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .live-clock-compact-time {
+  color: #0f172a;
+}
+
+[data-theme="light"] .live-clock-compact-tz {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+[data-theme="light"] .floating-contact-trigger {
+  background-color: #2563eb;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .floating-contact-trigger:hover {
+  background-color: #1d4ed8;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.48), 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .floating-contact-popover {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.15), 0 8px 16px -6px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .dev-contact-container {
+  background: linear-gradient(145deg, #ffffff 0%, #f6faff 100%);
+  border-color: #bfdbfe;
+}
+
+[data-theme="light"] .dev-contact-container::before {
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 50%, #93c5fd 100%);
+}
+
+[data-theme="light"] .dev-avatar-glow {
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="light"] .dev-avatar-inner {
+  background: #ffffff;
+  color: #2563eb;
+}
+
+[data-theme="light"] .dev-badge-verified {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+[data-theme="light"] .dev-channel-card {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .dev-channel-card:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="light"] .dev-channel-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .dev-channel-value-box {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .dev-channel-value {
+  color: #0f172a;
+}
+
+[data-theme="light"] .wa-icon-glow,
+[data-theme="light"] .ig-icon-glow {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+[data-theme="light"] .dev-btn-secondary {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+[data-theme="light"] .dev-btn-secondary:hover {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+[data-theme="light"] .sidebar-social-item {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+[data-theme="light"] .sidebar-social-item:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* Tombol Pengganti Tema Cepat di Header Seluler */
+.mobile-theme-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 
 

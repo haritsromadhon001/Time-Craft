@@ -12,6 +12,8 @@ import {
   PanelLeftOpen,
   Menu,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { getSupabaseConfigStatus } from '../../services/supabase';
 import { useApp } from '../../context/AppContext';
@@ -20,7 +22,7 @@ import { FloatingContactWidget } from '../ui/FloatingContactWidget';
 import { LiveClock } from '../ui/LiveClock';
 
 export const AppLayout: React.FC = () => {
-  const { user, refreshUserData } = useApp();
+  const { user, refreshUserData, theme, toggleTheme } = useApp();
   const dbStatus = getSupabaseConfigStatus();
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -71,7 +73,7 @@ export const AppLayout: React.FC = () => {
       <header className="mobile-header" aria-label="Bilah Navigasi Seluler">
         <div className="mobile-header-brand">
           <img
-            src="/favicon.svg"
+            src={theme === 'light' ? '/logo-blue.svg' : '/logo-red.svg'}
             alt="Logo TimeCraft"
             width={28}
             height={28}
@@ -83,7 +85,17 @@ export const AppLayout: React.FC = () => {
           </div>
         </div>
 
-        <div className="mobile-header-right">
+        <div className="mobile-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <button
+            type="button"
+            className="mobile-hamburger-btn"
+            onClick={toggleTheme}
+            title={theme === 'light' ? 'Beralih ke Tema Hitam (Merah)' : 'Beralih ke Tema Putih (Biru)'}
+            aria-label="Ganti Tema Tampilan"
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+
           <div className="user-avatar" style={{ width: '30px', height: '30px', fontSize: '0.8rem' }}>
             {user?.avatar_url ? (
               <img
@@ -124,7 +136,7 @@ export const AppLayout: React.FC = () => {
         <div className="sidebar-top">
           <div className="brand-box">
             <img
-              src="/favicon.svg"
+              src={theme === 'light' ? '/logo-blue.svg' : '/logo-red.svg'}
               alt="Logo TimeCraft"
               width={34}
               height={34}
@@ -139,6 +151,17 @@ export const AppLayout: React.FC = () => {
           </div>
 
           <div className="sidebar-top-actions">
+            {/* Tombol ganti tema tampilan */}
+            <button
+              type="button"
+              className="sidebar-toggle-btn desktop-only-btn"
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Beralih ke Tema Hitam (Merah)' : 'Beralih ke Tema Putih (Biru)'}
+              aria-label="Ganti Tema Tampilan"
+            >
+              {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
+            </button>
+
             {/* Tombol ciutkan sidebar (Desktop) */}
             <button
               type="button"
