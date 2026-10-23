@@ -1,77 +1,75 @@
 /* ============================================================================
- * TIMECRAFT — CLEAN WHITE & PROFESSIONAL BLUE DESIGN SYSTEM (SaaS Edition)
+ * TIMECRAFT — OBSIDIAN BLACK & CRIMSON RED DESIGN SYSTEM
  * ============================================================================
  * Palet Warna Utama:
- * - Primary Background: #FFFFFF
- * - Secondary Background: #F3F6FB
- * - Primary Blue: #2563EB
- * - Hover Blue: #1D4ED8
- * - Light Blue Surface: #EFF6FF
- * - Primary Text: #111827
- * - Secondary Text: #6B7280
- * - Border: #E5E7EB
- * - Success: #16A34A | Warning: #D97706 | Error: #DC2626
+ * - Primary Background: #090B10 (Obsidian Black)
+ * - Secondary Background: #0D1117 (Deep Black Canvas)
+ * - Surface Card: #121722 (Rich Slate Card)
+ * - Primary Brand / Logo: #DC2626 (Crimson Red)
+ * - Primary Text: #FFFFFF (Pure White - Maksimal Terlihat)
+ * - Secondary Text: #CBD5E1 (Bright Silver - Sangat Jelas)
+ * - Border: #242D3D (Crisp Defined Separation)
  * ============================================================================ */
 
 :root {
-  /* Backgrounds & Surfaces */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f6fb;
-  --surface-card: #ffffff;
-  --surface-elevated: #f3f6fb;
-  --surface-blue-light: #eff6ff;
-  --surface-hover: #f3f6fb;
-  --surface-input: #ffffff;
+  /* Backgrounds & Surfaces (Tema Hitam / Midnight Black Dark Theme) */
+  --bg-primary: #090b10;
+  --bg-secondary: #0d1117;
+  --surface-card: #121722;
+  --surface-elevated: #161d2b;
+  --surface-blue-light: #1c1316;
+  --surface-hover: #1a2233;
+  --surface-input: #080a0f;
 
-  /* Borders */
-  --border-subtle: #e5e7eb;
-  --border-strong: #d1d5db;
-  --border-focus: #2563eb;
-  --border-blue-subtle: #bfdbfe;
+  /* Borders (Garis Batas Tegas & Rapi) */
+  --border-subtle: #242d3d;
+  --border-strong: #38465e;
+  --border-focus: #ef4444;
+  --border-blue-subtle: #4a1d24;
 
-  /* Primary Interactive Blue */
-  --primary-blue: #2563eb;
-  --primary-blue-hover: #1d4ed8;
-  --primary-blue-surface: #eff6ff;
-  --secondary-blue-chart: #93c5fd;
+  /* Primary Interactive Red (Sesuai Logo Merah TimeCraft) */
+  --primary-blue: #dc2626;
+  --primary-blue-hover: #b91c1c;
+  --primary-blue-surface: #261215;
+  --secondary-blue-chart: #f87171;
 
   /* Alias variabel kompatibilitas komponen */
-  --accent-teal: #2563eb;
-  --accent-teal-hover: #1d4ed8;
-  --accent-teal-muted: #eff6ff;
-  --accent-teal-border: #bfdbfe;
+  --accent-teal: #dc2626;
+  --accent-teal-hover: #b91c1c;
+  --accent-teal-muted: #261215;
+  --accent-teal-border: #4a1d24;
 
   /* Semantic Status Colors */
-  --status-success: #16a34a;
-  --status-success-bg: #f0fdf4;
-  --status-success-border: #bbf7d0;
-  --status-warning: #d97706;
-  --status-warning-bg: #fffbeb;
-  --status-warning-border: #fde68a;
-  --status-danger: #dc2626;
-  --status-danger-bg: #fef2f2;
-  --status-danger-border: #fecaca;
-  --status-info: #2563eb;
-  --status-info-bg: #eff6ff;
-  --status-info-border: #bfdbfe;
+  --status-success: #22c55e;
+  --status-success-bg: #0f2317;
+  --status-success-border: #166534;
+  --status-warning: #f59e0b;
+  --status-warning-bg: #291a07;
+  --status-warning-border: #854d0e;
+  --status-danger: #ef4444;
+  --status-danger-bg: #2b1115;
+  --status-danger-border: #7f1d1d;
+  --status-info: #ef4444;
+  --status-info-bg: #261215;
+  --status-info-border: #4a1d24;
 
-  /* Typography Colors */
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-muted: #6b7280;
+  /* Typography Colors (Teks Tajam, Kontras Tinggi & Sangat Terlihat) */
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
   --text-on-accent: #ffffff;
 
   /* Font Families */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Spacing, Radius & Subtle Shadows */
+  /* Spacing, Radius & Shadows */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
-  --shadow-card: 0 1px 3px 0 rgba(17, 24, 39, 0.04), 0 1px 2px -1px rgba(17, 24, 39, 0.03);
-  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(239, 68, 68, 0.35);
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -86,7 +84,7 @@
 
 html {
   font-size: 16px;
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -200,16 +198,16 @@ code {
 
 .brand-title {
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: #ffffff;
   line-height: 1.2;
 }
 
 .brand-subtitle {
   font-size: 0.72rem;
-  color: var(--primary-blue);
-  font-weight: 600;
+  color: #ef4444;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -249,9 +247,9 @@ code {
 
 .sidebar-section-label {
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
   padding: 0.25rem 0.65rem 0;
 }
 
@@ -272,10 +270,10 @@ code {
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
   border-radius: var(--radius-md);
-  color: var(--text-secondary);
+  color: #cbd5e1;
   text-decoration: none;
   font-size: 0.88rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color var(--transition-fast), color var(--transition-fast);
   border: 1px solid transparent;
   white-space: nowrap;
@@ -287,32 +285,32 @@ code {
 }
 
 .nav-item svg {
-  color: var(--text-secondary);
+  color: #94a3b8;
   transition: color var(--transition-fast);
   flex-shrink: 0;
 }
 
 .nav-item:hover {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  background-color: #1a2233;
+  color: #ffffff;
 }
 
 .nav-item:hover svg {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .nav-item.active {
-  background-color: var(--surface-blue-light);
-  color: var(--primary-blue);
-  border-color: var(--border-blue-subtle);
-  font-weight: 600;
+  background-color: rgba(220, 38, 38, 0.16);
+  color: #ef4444;
+  border-color: rgba(220, 38, 38, 0.35);
+  font-weight: 700;
 }
 
 .nav-item.active svg {
-  color: var(--primary-blue);
+  color: #ef4444;
 }
 
-/* Sidebar Kontak & Media Sosial (WhatsApp & Instagram) — Warna Biru Website */
+/* Sidebar Kontak & Media Sosial (WhatsApp & Instagram) — Nuansa Merah Elegan */
 .sidebar-social-section {
   display: flex;
   flex-direction: column;
@@ -334,9 +332,9 @@ code {
   gap: 0.65rem;
   padding: 0.42rem 0.6rem;
   border-radius: var(--radius-md);
-  background-color: var(--surface-blue-light);
-  border: 1px solid var(--border-blue-subtle);
-  color: var(--primary-blue);
+  background-color: #1a1215;
+  border: 1px solid #4a1d24;
+  color: #f87171;
   text-decoration: none;
   font-size: 0.8rem;
   transition: all var(--transition-fast);
@@ -346,7 +344,7 @@ code {
   background-color: var(--primary-blue);
   color: #ffffff;
   border-color: var(--primary-blue-hover);
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
 }
 
 .sidebar-social-item:hover .sidebar-social-icon-box {
@@ -355,19 +353,19 @@ code {
 }
 
 .sidebar-social-item:hover .sidebar-social-sub {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .sidebar-social-icon-box {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background-color: #ffffff;
-  border: 1px solid var(--border-blue-subtle);
+  background-color: #161c28;
+  border: 1px solid #4a1d24;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-blue);
+  color: #ef4444;
   flex-shrink: 0;
   transition: all var(--transition-fast);
 }
@@ -790,6 +788,14 @@ code {
   flex-shrink: 0;
 }
 
+.empty-state-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
 .card {
   background-color: var(--surface-card);
   border: 1px solid var(--border-subtle);
@@ -815,14 +821,15 @@ code {
 
 .card-title {
   font-size: 1.02rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 750;
+  color: #ffffff;
   letter-spacing: -0.01em;
 }
 
 .card-description {
   font-size: 0.84rem;
-  color: var(--text-secondary);
+  color: #cbd5e1;
+  font-weight: 500;
   margin-top: 0.2rem;
 }
 
@@ -946,24 +953,27 @@ code {
 }
 
 .btn-secondary {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: #151b27;
+  color: #ffffff;
   border-color: var(--border-subtle);
+  font-weight: 600;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--bg-secondary);
+  background-color: #1e2638;
   border-color: var(--border-strong);
+  color: #ffffff;
 }
 
 .btn-danger {
   background-color: var(--status-danger-bg);
-  color: var(--status-danger);
+  color: #fca5a5;
   border-color: var(--status-danger-border);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #fee2e2;
+  background-color: #4a131a;
+  color: #ffffff;
 }
 
 .mono {
@@ -1131,7 +1141,200 @@ code {
   background-color: var(--surface-blue-light);
 }
 
-/* Grafik Batang Harian (Clean Blue SaaS Chart) */
+/* Icon Box Pill (Merah Elegan Sesuai Logo TimeCraft) */
+.icon-box-blue {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(220, 38, 38, 0.14);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+ * GRAFIK SCREEN TIME 7 HARI TERAKHIR (ARSITEKTUR NON-OVERLAPPING BEBAS TABRAKAN)
+ * ============================================================================ */
+
+.chart-card {
+  overflow: hidden;
+}
+
+.chart-container-box {
+  background-color: #0b0f17;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 0.85rem 0.85rem;
+  margin-top: 0.85rem;
+}
+
+/* 1. Baris Batang Grafik (Nilai di Puncak & Batang ke Atas) */
+.chart-bars-track {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: end;
+  height: 160px;
+  padding-bottom: 0.25rem;
+}
+
+.chart-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 0.35rem;
+}
+
+.chart-val-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1;
+}
+
+.chart-val-badge.empty {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.chart-bar-stack {
+  width: 100%;
+  max-width: 38px;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  border: 1px solid #dc2626;
+  background-color: #261215;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+  min-height: 8px;
+  transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+
+.chart-bar-stack:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+}
+
+.chart-seg-timer {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  width: 100%;
+}
+
+.chart-seg-manual {
+  background: linear-gradient(180deg, #fca5a5 0%, #f87171 100%);
+  width: 100%;
+}
+
+.chart-empty-slot {
+  width: 100%;
+  max-width: 38px;
+  height: 22px;
+  border: 1px dashed var(--border-strong);
+  background-color: #121824;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* 2. Garis Batas Horizontal Sumbu X (Baseline Pembatas yang Tegas) */
+.chart-axis-line {
+  height: 2px;
+  background-color: var(--border-strong);
+  width: 100%;
+  margin: 0.35rem 0 0.55rem;
+}
+
+/* 3. Baris Label Tanggal Terpisah (Tidak Pernah Bertabrakan dengan Batang) */
+.chart-dates-track {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: flex-start;
+  text-align: center;
+}
+
+.chart-date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.chart-day-name {
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #cbd5e1;
+  text-transform: capitalize;
+}
+
+.chart-day-name.active {
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.chart-day-date {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* 4. Keterangan / Legend Terpisah di Bawah dengan Jarak Aman */
+.chart-legend-box {
+  display: flex;
+  gap: 1.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 1.15rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 550;
+}
+
+.legend-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.legend-timer {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  border: 1px solid #b91c1c;
+}
+
+.legend-manual {
+  background: linear-gradient(180deg, #fca5a5 0%, #f87171 100%);
+  border: 1px solid #ef4444;
+}
+
+.legend-empty {
+  border: 1px dashed var(--border-strong);
+  background-color: #121824;
+}
+
+/* Alias kompatibilitas jika masih dipakai */
 .bar-chart-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1141,59 +1344,6 @@ code {
   padding: 1.5rem 0.5rem 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   background-color: var(--bg-primary);
-}
-
-.bar-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  gap: 0.4rem;
-}
-
-.bar-value-label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: center;
-}
-
-.bar-stack {
-  width: 100%;
-  max-width: 42px;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  display: flex;
-  flex-direction: column-reverse;
-  overflow: hidden;
-  border: 1px solid var(--primary-blue);
-  background: var(--surface-blue-light);
-  min-height: 4px;
-}
-
-.bar-segment-timer {
-  background-color: var(--primary-blue);
-  width: 100%;
-}
-
-.bar-segment-manual {
-  background-color: var(--secondary-blue-chart);
-  width: 100%;
-}
-
-.bar-empty-slot {
-  width: 100%;
-  max-width: 42px;
-  height: 20px;
-  border: 1px dashed var(--border-strong);
-  background-color: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  color: var(--text-secondary);
 }
 
 /* Panel Focus Timer (Bersih Tanpa Gradien Berlebihan) */
@@ -1224,25 +1374,25 @@ code {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: #cbd5e1;
 }
 
 .stat-card-value {
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
-  font-size: 1.45rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   margin: 0.55rem 0 0.25rem;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .stat-card-value.empty {
-  color: var(--text-secondary);
+  color: #cbd5e1;
   font-size: 1.15rem;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 /* Modal / Dialog Konfirmasi Kustom yang Bersih */
@@ -1488,8 +1638,13 @@ code {
     font-size: 2.85rem;
   }
 
+  .chart-bars-track,
+  .chart-dates-track,
   .bar-chart-grid {
     gap: 0.35rem;
+  }
+  .chart-day-date {
+    font-size: 0.62rem;
   }
 
   /* Tombol Aksi Kartu Sambutan di Seluler */
@@ -1497,8 +1652,8 @@ code {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    margin-top: 0.35rem;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
   }
 
   .empty-state-actions .btn {
@@ -1555,7 +1710,7 @@ code {
   background-color: var(--primary-blue);
   color: #ffffff;
   border: none;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4), 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4), 0 2px 6px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1567,11 +1722,12 @@ code {
 .floating-contact-trigger:hover {
   background-color: var(--primary-blue-hover);
   transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.48), 0 3px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.48), 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
 .floating-contact-trigger.active {
-  background-color: #0f172a;
+  background-color: #261215;
+  border: 1px solid #7f1d1d;
   transform: rotate(90deg);
 }
 
@@ -1590,7 +1746,7 @@ code {
   height: 10px;
   border-radius: 999px;
   background-color: #22c55e;
-  border: 2px solid #ffffff;
+  border: 2px solid #090b10;
 }
 
 .floating-contact-popover {
@@ -1599,10 +1755,10 @@ code {
   right: 0;
   width: 350px;
   max-width: calc(100vw - 32px);
-  background-color: #ffffff;
-  border: 1px solid var(--border-blue-subtle);
+  background-color: #121722;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: 0 16px 36px -4px rgba(37, 99, 235, 0.2), 0 8px 16px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 8px 16px -6px rgba(0, 0, 0, 0.45);
   padding: 10px 12px 14px;
   display: flex;
   flex-direction: column;
@@ -1684,8 +1840,8 @@ code {
 }
 
 .contact-card-box {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: #161c28;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 10px 11px;
   transition: border-color var(--transition-fast);
@@ -1771,7 +1927,8 @@ code {
 }
 
 .btn-contact-secondary:hover {
-  background-color: #dbeafe;
+  background-color: #38181e;
+  color: #ffffff;
 }
 
 @media print {
@@ -1788,11 +1945,11 @@ code {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
-  border: 1px solid var(--border-blue-subtle);
+  background: linear-gradient(135deg, #141926 0%, #0d1119 100%);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 0.65rem 1rem;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   min-width: 220px;
 }
 
@@ -1824,7 +1981,7 @@ code {
   height: 8px;
   border-radius: 999px;
   background-color: #16a34a;
-  border: 2px solid #ffffff;
+  border: 2px solid #090b10;
   animation: clockPulse 2s infinite ease-in-out;
 }
 
@@ -1882,7 +2039,7 @@ code {
 
 .live-clock-date {
   font-weight: 600;
-  color: #374151;
+  color: #cbd5e1;
 }
 
 .live-clock-status-text {
@@ -1948,7 +2105,7 @@ code {
   font-size: 0.62rem;
   font-weight: 750;
   color: var(--primary-blue);
-  background-color: #ffffff;
+  background-color: #1a1215;
   border: 1px solid var(--border-blue-subtle);
   padding: 0.04rem 0.28rem;
   border-radius: 3px;
@@ -1963,11 +2120,11 @@ code {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  background: linear-gradient(145deg, #ffffff 0%, #f6faff 100%);
-  border: 1px solid var(--border-blue-subtle);
+  background: linear-gradient(145deg, #131824 0%, #0d1119 100%);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.15rem 1.25rem;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   position: relative;
   overflow: hidden;
 }
@@ -1979,7 +2136,7 @@ code {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 50%, #93c5fd 100%);
+  background: linear-gradient(90deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
 }
 
 .dev-profile-header {
@@ -2001,8 +2158,8 @@ code {
   height: 44px;
   border-radius: 999px;
   padding: 2px;
-  background: linear-gradient(135deg, #2563eb, #60a5fa);
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2013,7 +2170,7 @@ code {
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  background: #ffffff;
+  background: #090b10;
   color: var(--primary-blue);
   font-weight: 800;
   font-size: 1.15rem;
@@ -2083,7 +2240,7 @@ code {
 
 .dev-profile-bio {
   font-size: 0.8rem;
-  color: #475569;
+  color: #cbd5e1;
   line-height: 1.5;
   margin: 0;
 }
@@ -2095,8 +2252,8 @@ code {
 }
 
 .dev-channel-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: #161c28;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.85rem 0.95rem;
   display: flex;
@@ -2108,7 +2265,7 @@ code {
 .dev-channel-card:hover {
   border-color: var(--border-blue-subtle);
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 6px 14px rgba(220, 38, 38, 0.15);
 }
 
 .dev-channel-top {
@@ -2128,15 +2285,15 @@ code {
 }
 
 .wa-icon-glow {
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #2563eb;
+  background-color: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #ef4444;
 }
 
 .ig-icon-glow {
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #2563eb;
+  background-color: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #ef4444;
 }
 
 .dev-channel-meta {
@@ -2156,13 +2313,13 @@ code {
 .dev-channel-title {
   font-size: 0.85rem;
   font-weight: 750;
-  color: var(--text-primary);
+  color: #ffffff;
   margin: 0;
 }
 
 .dev-channel-value-box {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: #0d1119;
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 0.35rem 0.55rem;
 }
@@ -2171,7 +2328,7 @@ code {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #ffffff;
   letter-spacing: -0.01em;
 }
 
@@ -2209,12 +2366,13 @@ code {
 
 .dev-btn-secondary {
   background-color: var(--surface-blue-light);
-  color: var(--primary-blue);
+  color: #f87171;
   border: 1px solid var(--border-blue-subtle);
 }
 
 .dev-btn-secondary:hover {
-  background-color: #dbeafe;
+  background-color: #38181e;
+  color: #ffffff;
 }
 
 .dev-footer-note {

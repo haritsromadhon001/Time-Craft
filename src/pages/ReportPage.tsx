@@ -127,6 +127,14 @@ export const ReportPage: React.FC = () => {
     return { critique: crit, suggestions: tips };
   }, [grandTotal, productivePct, nonProductivePct, nonProductiveTotal, completedFocusSessions, totalFocusMinutes, target, avgDaily]);
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className="report-root-container">
       <style>{`
@@ -138,12 +146,21 @@ export const ReportPage: React.FC = () => {
           html, body {
             margin: 0 !important;
             padding: 0 !important;
-            height: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
             background-color: #ffffff !important;
             font-size: 11px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-          .no-print-bar {
+          .no-print-bar,
+          .mobile-scroll-hint {
             display: none !important;
+          }
+          .report-root-container {
+            background-color: #ffffff !important;
+            padding: 0 !important;
+            min-height: auto !important;
           }
           .report-paper-a4 {
             box-shadow: none !important;
@@ -155,63 +172,170 @@ export const ReportPage: React.FC = () => {
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
-            min-height: 270mm !important;
-            height: 270mm !important;
+            min-height: auto !important;
             page-break-after: avoid !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          .report-header-box {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            padding-bottom: 12px !important;
+            border-bottom: 2px solid #dc2626 !important;
+          }
+          .brand-group-left {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+          }
+          .brand-name-text {
+            font-size: 19px !important;
+          }
+          .brand-slogan-text {
+            font-size: 10.5px !important;
+            color: #dc2626 !important;
+          }
+          .meta-text-box {
+            text-align: right !important;
+            background: none !important;
+            border: none !important;
+            padding: 0 !important;
+            width: auto !important;
+            font-size: 10.5px !important;
+          }
+          .period-strip {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            margin: 10px 0 12px !important;
+          }
+          .metrics-4-row {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+          }
+          .metric-cell {
+            padding: 7px 10px !important;
+          }
+          .metric-cell-label {
+            font-size: 9.5px !important;
+          }
+          .metric-cell-val {
+            font-size: 14.5px !important;
+          }
+          .section-headline {
+            font-size: 11.5px !important;
+            margin: 12px 0 5px !important;
+          }
+          .table-responsive-box {
+            overflow: visible !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
+          }
+          .compact-table {
+            min-width: 100% !important;
+            width: 100% !important;
+            font-size: 10.5px !important;
+          }
+          .compact-table th,
+          .compact-table td {
+            padding: 4px 7px !important;
+            white-space: normal !important;
+          }
+          .eval-box {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            padding: 9px 12px !important;
+            margin-top: 10px !important;
+          }
+          .footer-strip {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-top: auto !important;
+            padding-top: 10px !important;
+            font-size: 9.5px !important;
+          }
         }
+
+        /* Tampilan Layar (Screen) */
         .report-root-container {
           min-height: 100vh;
-          background-color: #f1f5f9;
+          background-color: #090b10;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           color: #111827;
+          padding-bottom: 30px;
         }
         .no-print-bar {
           position: sticky;
           top: 0;
           z-index: 999;
-          background-color: #0f172a;
+          background-color: #0d1118;
           color: #ffffff;
-          padding: 9px 20px;
+          padding: 10px 20px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+          border-bottom: 1px solid #242d3d;
+        }
+        .no-print-bar-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .no-print-bar-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
         .btn-print-action {
-          background-color: #2563eb;
+          background-color: #dc2626;
           color: #ffffff;
           border: none;
           border-radius: 6px;
-          padding: 6px 14px;
+          padding: 7px 14px;
           font-size: 12px;
           font-weight: 600;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 6px;
+          white-space: nowrap;
+          transition: background-color 0.15s;
         }
         .btn-print-action:hover {
-          background-color: #1d4ed8;
+          background-color: #b91c1c;
         }
         .btn-back-action {
           background-color: transparent;
           color: #cbd5e1;
           border: 1px solid #475569;
           border-radius: 6px;
-          padding: 6px 12px;
+          padding: 7px 12px;
           font-size: 12px;
+          font-weight: 500;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 5px;
+          white-space: nowrap;
+          transition: all 0.15s;
         }
         .btn-back-action:hover {
           color: #ffffff;
           border-color: #94a3b8;
+          background-color: rgba(255, 255, 255, 0.05);
         }
         .report-paper-a4 {
           max-width: 780px;
@@ -231,8 +355,13 @@ export const ReportPage: React.FC = () => {
           align-items: center;
           justify-content: space-between;
           padding-bottom: 12px;
-          border-bottom: 2px solid #2563eb;
+          border-bottom: 2px solid #dc2626;
           gap: 12px;
+        }
+        .brand-group-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
         .brand-logo-img {
           width: 40px;
@@ -250,7 +379,7 @@ export const ReportPage: React.FC = () => {
         .brand-slogan-text {
           font-size: 10.5px;
           font-weight: 600;
-          color: #2563eb;
+          color: #dc2626;
           letter-spacing: 0.02em;
         }
         .meta-text-box {
@@ -266,8 +395,10 @@ export const ReportPage: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 6px 12px;
           margin: 10px 0 12px;
-          padding: 4px 10px;
+          padding: 5px 10px;
           background-color: #eff6ff;
           border: 1px solid #bfdbfe;
           border-radius: 5px;
@@ -310,12 +441,22 @@ export const ReportPage: React.FC = () => {
           display: flex;
           justify-content: space-between;
           align-items: baseline;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .mobile-scroll-hint {
+          display: none;
+        }
+        .table-responsive-box {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          margin-bottom: 8px;
         }
         .compact-table {
           width: 100%;
           border-collapse: collapse;
           font-size: 10.5px;
-          margin-bottom: 8px;
         }
         .compact-table th {
           background-color: #f1f5f9;
@@ -344,7 +485,7 @@ export const ReportPage: React.FC = () => {
         }
         .bar-fill {
           height: 100%;
-          background-color: #2563eb;
+          background-color: #dc2626;
           border-radius: 999px;
         }
         .badge-compact {
@@ -407,19 +548,148 @@ export const ReportPage: React.FC = () => {
           width: 100%;
           box-sizing: border-box;
         }
+
+        /* Penyesuaian Responsif Khusus Layar HP / Mobile */
+        @media screen and (max-width: 640px) {
+          .no-print-bar {
+            padding: 10px 12px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+          .no-print-bar-title {
+            justify-content: center;
+            text-align: center;
+          }
+          .no-print-bar-actions {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+          }
+          .btn-print-action,
+          .btn-back-action {
+            flex: 1;
+            justify-content: center;
+            padding: 8px 10px;
+            font-size: 12px;
+          }
+          .report-paper-a4 {
+            margin: 10px auto;
+            padding: 14px 12px;
+            width: calc(100% - 16px);
+            min-height: auto;
+            border-radius: 8px;
+          }
+          .report-header-box {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding-bottom: 10px;
+          }
+          .brand-group-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .brand-name-text {
+            font-size: 17px;
+          }
+          .brand-slogan-text {
+            font-size: 9.5px;
+            line-height: 1.3;
+          }
+          .meta-text-box {
+            text-align: left;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 7px 10px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 10px;
+            line-height: 1.45;
+          }
+          .period-strip {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 6px 10px;
+            font-size: 10px;
+          }
+          .metrics-4-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+          }
+          .metric-cell {
+            padding: 8px 9px;
+          }
+          .metric-cell-label {
+            font-size: 9px;
+            line-height: 1.25;
+          }
+          .metric-cell-val {
+            font-size: 13.5px;
+            margin-top: 3px;
+          }
+          .section-headline {
+            font-size: 11px;
+            margin: 10px 0 6px;
+          }
+          .mobile-scroll-hint {
+            display: inline;
+            font-size: 9px;
+            color: #dc2626;
+            font-weight: 500;
+          }
+          .compact-table {
+            min-width: 490px;
+            font-size: 10px;
+          }
+          .compact-table th,
+          .compact-table td {
+            padding: 5px 7px;
+            white-space: nowrap;
+          }
+          .compact-table th:last-child,
+          .compact-table td:last-child {
+            white-space: normal;
+          }
+          .eval-box {
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 10px;
+            margin-top: 8px;
+          }
+          .eval-col-title {
+            font-size: 10.5px;
+          }
+          .eval-col-desc,
+          .eval-list {
+            font-size: 9.5px;
+            line-height: 1.4;
+          }
+          .footer-strip {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            font-size: 9px;
+            margin-top: 14px;
+          }
+        }
       `}</style>
 
       {/* Bilah Aksi di Layar */}
       <div className="no-print-bar">
-        <div>
-          <strong style={{ fontSize: '13px' }}>TimeCraft — Laporan Resmi A4 (1 Halaman)</strong>
+        <div className="no-print-bar-title">
+          <strong style={{ fontSize: '13px' }}>TimeCraft — Laporan Resmi A4</strong>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="no-print-bar-actions">
           <button type="button" className="btn-print-action" onClick={() => window.print()}>
             <Printer size={14} />
-            <span>Simpan sebagai PDF / Cetak</span>
+            <span>Simpan PDF / Cetak</span>
           </button>
-          <button type="button" className="btn-back-action" onClick={() => navigate('/')}>
+          <button type="button" className="btn-back-action" onClick={handleBack}>
             <ArrowLeft size={13} />
             <span>Kembali</span>
           </button>
@@ -430,13 +700,13 @@ export const ReportPage: React.FC = () => {
       <div className="report-paper-a4">
         {/* Kop Surat Resmi */}
         <header className="report-header-box">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="brand-group-left">
             <svg className="brand-logo-img" viewBox="0 0 64 64" fill="none">
-              <rect width="64" height="64" rx="16" fill="#2563EB" />
+              <rect width="64" height="64" rx="16" fill="#DC2626" />
               <circle cx="32" cy="32" r="20" stroke="#FFFFFF" strokeWidth="4.5" strokeOpacity="0.95" />
-              <circle cx="32" cy="32" r="14" stroke="#93C5FD" strokeWidth="2" strokeDasharray="4 4" />
+              <circle cx="32" cy="32" r="14" stroke="#FCA5A5" strokeWidth="2" strokeDasharray="4 4" />
               <path d="M32 20V32L40 37" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="32" cy="12" r="2.5" fill="#EFF6FF" />
+              <circle cx="32" cy="12" r="2.5" fill="#FEF2F2" />
             </svg>
             <div>
               <div className="brand-name-text">TimeCraft</div>
@@ -444,7 +714,7 @@ export const ReportPage: React.FC = () => {
             </div>
           </div>
           <div className="meta-text-box">
-            <div>Pengguna: <strong>{user?.display_name}</strong> ({user?.email})</div>
+            <div>Pengguna: <strong>{user?.display_name || 'Pengguna'}</strong> ({user?.email})</div>
             <div>Zona Waktu: <strong>{timezone}</strong> • Dicetak: <strong>{nowFormatted}</strong></div>
           </div>
         </header>
@@ -478,43 +748,48 @@ export const ReportPage: React.FC = () => {
         {/* Tabel Distribusi Kategori */}
         <div className="section-headline">
           <span>Distribusi Waktu Berdasarkan Kategori</span>
-          <span style={{ fontSize: '9.5px', color: '#64748b' }}>Dari {filteredLogs.length} catatan aktivitas</span>
+          <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+            Dari {filteredLogs.length} catatan aktivitas{' '}
+            <span className="mobile-scroll-hint">(Geser tabel &rarr;)</span>
+          </span>
         </div>
 
-        <table className="compact-table">
-          <thead>
-            <tr>
-              <th>Kategori Aktivitas</th>
-              <th>Klasifikasi</th>
-              <th>Durasi</th>
-              <th>Persentase</th>
-              <th style={{ width: '30%' }}>Proporsi Visual</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.values(ACTIVITY_CATEGORIES).map((cat) => {
-              const mins = totals[cat.id] || 0;
-              const pct = grandTotal > 0 ? Math.round((mins / grandTotal) * 100) : 0;
-              return (
-                <tr key={cat.id}>
-                  <td><strong>{cat.label}</strong></td>
-                  <td>
-                    <span className={`badge-compact ${cat.isProductive ? 'badge-green' : 'badge-gray'}`}>
-                      {cat.isProductive ? 'Produktif' : 'Non-Produktif'}
-                    </span>
-                  </td>
-                  <td>{mins} menit ({(mins / 60).toFixed(1)} jam)</td>
-                  <td><strong>{pct}%</strong></td>
-                  <td>
-                    <div className="bar-bg">
-                      <div className="bar-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="table-responsive-box">
+          <table className="compact-table">
+            <thead>
+              <tr>
+                <th>Kategori Aktivitas</th>
+                <th>Klasifikasi</th>
+                <th>Durasi</th>
+                <th>Persentase</th>
+                <th style={{ width: '28%' }}>Proporsi Visual</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.values(ACTIVITY_CATEGORIES).map((cat) => {
+                const mins = totals[cat.id] || 0;
+                const pct = grandTotal > 0 ? Math.round((mins / grandTotal) * 100) : 0;
+                return (
+                  <tr key={cat.id}>
+                    <td><strong>{cat.label}</strong></td>
+                    <td>
+                      <span className={`badge-compact ${cat.isProductive ? 'badge-green' : 'badge-gray'}`}>
+                        {cat.isProductive ? 'Produktif' : 'Non-Produktif'}
+                      </span>
+                    </td>
+                    <td>{mins} menit ({(mins / 60).toFixed(1)} jam)</td>
+                    <td><strong>{pct}%</strong></td>
+                    <td>
+                      <div className="bar-bg">
+                        <div className="bar-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
         {/* Bagian Kritik & Saran (Evaluasi Produktivitas & Keseimbangan Digital) */}
         <div className="section-headline" style={{ marginTop: '10px' }}>
@@ -524,7 +799,7 @@ export const ReportPage: React.FC = () => {
         <div className="eval-box">
           <div>
             <div className="eval-col-title">
-              <AlertCircle size={13} color="#2563eb" />
+              <AlertCircle size={13} color="#dc2626" />
               <span>Analisis &amp; Kritik Pola Penggunaan</span>
             </div>
             <p className="eval-col-desc">{evaluation.critique}</p>
@@ -547,7 +822,7 @@ export const ReportPage: React.FC = () => {
           <div>
             <strong>TimeCraft</strong> — Kesadaran Digital &amp; Pengelolaan Waktu
             <span style={{ color: '#94a3b8', margin: '0 6px' }}>•</span>
-            <span style={{ color: '#2563eb', fontWeight: 600 }}>Laporan Evaluasi Resmi</span>
+            <span style={{ color: '#dc2626', fontWeight: 600 }}>Laporan Evaluasi Resmi</span>
           </div>
           <div>Dokumen Laporan Resmi • Halaman 1 dari 1</div>
         </footer>

@@ -298,7 +298,19 @@ export class TimeCraftRepository {
             console.warn('Supabase tidak dapat dijangkau, otomatis beralih memeriksa Local Vault.');
             this.supabaseUnreachable = true;
           } else {
-            return { user: null, error: 'Email atau kata sandi salah, atau akun belum terdaftar.' };
+            const msg = (error.message || '').toLowerCase();
+            if (msg.includes('email not confirmed')) {
+              return {
+                user: null,
+                error:
+                  'Email Anda belum dikonfirmasi. Silakan periksa inbox/spam email Anda, atau nonaktifkan toggle "Confirm email" di dashboard Supabase (Authentication -> Providers -> Email).',
+              };
+            }
+            return {
+              user: null,
+              error:
+                'Email atau kata sandi salah, atau akun ini belum didaftarkan di database Supabase. Jika Anda baru saja menghubungkan database Supabase, silakan klik tab "Daftar Akun" di atas untuk mendaftarkan akun Anda.',
+            };
           }
         } else {
           const current = await this.getCurrentUser();
@@ -985,6 +997,88 @@ export class TimeCraftRepository {
     vault.weekly_reflections = vault.weekly_reflections.filter((r) => r.user_id !== current.id);
     writeLocalVault(vault, this.customStore);
     return { ok: true };
+  }
+
+  // --------------------------------------------------------------------------
+  // CADANGAN & PEMINDAHAN AKUN ANTAR-BROWSER (LOCAL VAULT SYNC / BACKUP)
+  // --------------------------------------------------------------------------
+
+  public exportVaultBackup(): string {
+    const vault = readLocalVault(this.customStore);
+    return JSON.stringify(vault, null, 2);
+  }
+
+  public importVaultBackup(jsonString: string): { ok: boolean; message: string; count?: number } {
+    try {
+      const parsed = JSON.parse(jsonString) as Partial<LocalVaultStructure>;
+      if (!parsed || !Array.isArray(parsed.users)) {
+        return {
+          ok: false,
+          message: 'Format file cadangan tidak valid (struktur data brankas tidak sesuai).',
+        };
+      }
+
+      const currentVault = readLocalVault(this.customStore);
+
+      let importedUsers = 0;
+      for (const incomingUser of parsed.users) {
+        if (!incomingUser.email || !incomingUser.id) continue;
+        const exists = currentVault.users.some(
+          (u) =>
+            u.email.toLowerCase() === incomingUser.email.toLowerCase() ||
+            u.id === incomingUser.id,
+        );
+        if (!exists) {
+          currentVault.users.push(incomingUser);
+          importedUsers++;
+        }
+      }
+
+      if (Array.isArray(parsed.screen_time_logs)) {
+        for (const log of parsed.screen_time_logs) {
+          if (!currentVault.screen_time_logs.some((l) => l.id === log.id)) {
+            currentVault.screen_time_logs.push(log);
+          }
+        }
+      }
+
+      if (Array.isArray(parsed.focus_sessions)) {
+        for (const sess of parsed.focus_sessions) {
+          if (!currentVault.focus_sessions.some((s) => s.id === sess.id)) {
+            currentVault.focus_sessions.push(sess);
+          }
+        }
+      }
+
+      if (Array.isArray(parsed.user_targets)) {
+        for (const target of parsed.user_targets) {
+          if (!currentVault.user_targets.some((t) => t.user_id === target.user_id)) {
+            currentVault.user_targets.push(target);
+          }
+        }
+      }
+
+      if (Array.isArray(parsed.weekly_reflections)) {
+        for (const ref of parsed.weekly_reflections) {
+          if (!currentVault.weekly_reflections.some((r) => r.id === ref.id)) {
+            currentVault.weekly_reflections.push(ref);
+          }
+        }
+      }
+
+      writeLocalVault(currentVault, this.customStore);
+
+      return {
+        ok: true,
+        count: importedUsers,
+        message: `Berhasil memulihkan cadangan! Data akun berhasil disinkronkan ke peramban ini.`,
+      };
+    } catch {
+      return {
+        ok: false,
+        message: 'Gagal memproses berkas cadangan. Pastikan format berkas adalah JSON yang valid.',
+      };
+    }
   }
 }
 

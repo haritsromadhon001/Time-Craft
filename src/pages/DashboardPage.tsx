@@ -146,15 +146,25 @@ export const DashboardPage: React.FC = () => {
           style={{
             borderColor: 'var(--border-blue-subtle)',
             backgroundColor: 'var(--surface-blue-light)',
-            padding: '1.1rem 1.35rem',
+            padding: '1.15rem 1.45rem',
+            margin: '0.4rem 0 0.85rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '1rem',
+            gap: '1.25rem',
+            rowGap: '1rem',
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              flex: '1 1 320px',
+              minWidth: 0,
+            }}
+          >
             <span
               className="icon-box-blue"
               style={{ backgroundColor: 'var(--bg-primary)' }}
@@ -172,13 +182,25 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="empty-state-actions">
-            <Link to="/targets" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.85rem' }}>
+            <Link
+              to="/targets"
+              className="btn btn-secondary"
+              style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}
+            >
               Atur Target
             </Link>
-            <Link to="/screen-time" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.85rem' }}>
+            <Link
+              to="/screen-time"
+              className="btn btn-secondary"
+              style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}
+            >
               Catat Aktivitas
             </Link>
-            <Link to="/focus-timer" className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '0.5rem 0.85rem' }}>
+            <Link
+              to="/focus-timer"
+              className="btn btn-primary"
+              style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}
+            >
               Mulai Fokus
             </Link>
           </div>
@@ -421,134 +443,119 @@ export const DashboardPage: React.FC = () => {
         </section>
 
         {/* Panel Grafik Penggunaan 7 Hari Terakhir */}
-        <section className="card">
+        {/* Panel Grafik Penggunaan 7 Hari Terakhir */}
+        <section className="card chart-card">
           <div className="card-header">
             <div>
               <h2 className="card-title">Grafik Screen Time 7 Hari Terakhir</h2>
               <p className="card-description">
-                Satuan: Menit per hari • Timer Sistem (Biru Utama) vs Input Manual (Biru Muda)
+                Satuan: Menit per hari • Timer Sistem (Merah Utama) vs Input Manual (Merah Muda)
               </p>
             </div>
           </div>
 
-          <div
-            className="bar-chart-grid"
-            role="img"
-            aria-label="Grafik batang screen time 7 hari terakhir"
-          >
-            {summary.last7DaysSeries.map((day) => {
-              if (day.totalMinutes === null) {
+          <div className="chart-container-box">
+            {/* 1. Baris Batang Grafik (Nilai di Atas & Batang ke Atas dari Dasar) */}
+            <div
+              className="chart-bars-track"
+              role="img"
+              aria-label="Grafik batang screen time 7 hari terakhir"
+            >
+              {summary.last7DaysSeries.map((day) => {
+                if (day.totalMinutes === null) {
+                  return (
+                    <div
+                      key={day.date}
+                      className="chart-bar-col"
+                      title={`${day.date}: Belum ada data`}
+                    >
+                      <span className="chart-val-badge empty">—</span>
+                      <div className="chart-empty-slot">Kosong</div>
+                    </div>
+                  );
+                }
+
+                const heightPct = Math.max(
+                  10,
+                  Math.round((day.totalMinutes / maxDailyChartMinutes) * 125),
+                );
+                const timerRatio =
+                  day.totalMinutes > 0
+                    ? Math.round((day.timerMinutes / day.totalMinutes) * 100)
+                    : 0;
+                const manualRatio = 100 - timerRatio;
+
                 return (
                   <div
                     key={day.date}
-                    className="bar-column"
-                    title={`${day.date}: Belum ada data`}
+                    className="chart-bar-col"
+                    title={`${day.date}: Total ${day.totalMinutes} menit (Timer: ${day.timerMinutes}m, Manual: ${day.manualMinutes}m)`}
                   >
-                    <span
-                      className="bar-value-label"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      —
-                    </span>
-                    <div className="bar-empty-slot">Kosong</div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                      {day.shortLabel}
-                    </span>
+                    <span className="chart-val-badge">{day.totalMinutes}m</span>
+                    <div className="chart-bar-stack" style={{ height: `${heightPct}px` }}>
+                      {day.timerMinutes > 0 && (
+                        <div
+                          className="chart-seg-timer"
+                          style={{ height: `${timerRatio}%` }}
+                        />
+                      )}
+                      {day.manualMinutes > 0 && (
+                        <div
+                          className="chart-seg-manual"
+                          style={{ height: `${manualRatio}%` }}
+                        />
+                      )}
+                    </div>
                   </div>
                 );
-              }
+              })}
+            </div>
 
-              const heightPct = Math.max(
-                8,
-                Math.round((day.totalMinutes / maxDailyChartMinutes) * 145),
-              );
-              const timerRatio =
-                day.totalMinutes > 0
-                  ? Math.round((day.timerMinutes / day.totalMinutes) * 100)
-                  : 0;
-              const manualRatio = 100 - timerRatio;
+            {/* 2. Garis Batas Horizontal Sumbu X (Baseline Pembatas Rapi) */}
+            <div className="chart-axis-line" />
 
-              return (
-                <div
-                  key={day.date}
-                  className="bar-column"
-                  title={`${day.date}: Total ${day.totalMinutes} menit (Timer: ${day.timerMinutes}m, Manual: ${day.manualMinutes}m)`}
-                >
-                  <span className="bar-value-label">{day.totalMinutes}m</span>
-                  <div className="bar-stack" style={{ height: `${heightPct}px` }}>
-                    {day.timerMinutes > 0 && (
-                      <div
-                        className="bar-segment-timer"
-                        style={{ height: `${timerRatio}%` }}
-                      />
-                    )}
-                    {day.manualMinutes > 0 && (
-                      <div
-                        className="bar-segment-manual"
-                        style={{ height: `${manualRatio}%` }}
-                      />
-                    )}
+            {/* 3. Baris Label Tanggal Terpisah (Tidak Bertabrakan dengan Batang) */}
+            <div className="chart-dates-track">
+              {summary.last7DaysSeries.map((day) => {
+                const [yyyy, mm, dd] = day.date.split('-').map(Number);
+                const dateObj = new Date(Date.UTC(yyyy, mm - 1, dd, 12, 0, 0));
+                const dayName = new Intl.DateTimeFormat('id-ID', {
+                  weekday: 'short',
+                  timeZone: 'UTC',
+                }).format(dateObj);
+                const dayDate = new Intl.DateTimeFormat('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  timeZone: 'UTC',
+                }).format(dateObj);
+
+                const hasData = day.totalMinutes !== null;
+
+                return (
+                  <div key={day.date} className="chart-date-item">
+                    <span className={`chart-day-name ${hasData ? 'active' : ''}`}>
+                      {dayName}
+                    </span>
+                    <span className="chart-day-date">{dayDate}</span>
                   </div>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      color: 'var(--text-primary)',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {day.shortLabel}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
-          {/* Keterangan (Legend) Grafik */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '1.25rem',
-              flexWrap: 'wrap',
-              marginTop: '0.85rem',
-              fontSize: '0.76rem',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span
-                style={{
-                  width: 11,
-                  height: 11,
-                  borderRadius: 3,
-                  backgroundColor: 'var(--primary-blue)',
-                  display: 'inline-block',
-                }}
-              />
-              Timer Aktivitas
+          {/* 4. Keterangan (Legend) Terpisah Rapi di Bawah Tanpa Benturan */}
+          <div className="chart-legend-box">
+            <span className="chart-legend-item">
+              <span className="legend-indicator legend-timer" />
+              <span>Timer Aktivitas</span>
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span
-                style={{
-                  width: 11,
-                  height: 11,
-                  borderRadius: 3,
-                  backgroundColor: 'var(--secondary-blue-chart)',
-                  display: 'inline-block',
-                }}
-              />
-              Input Manual
+            <span className="chart-legend-item">
+              <span className="legend-indicator legend-manual" />
+              <span>Input Manual</span>
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span
-                style={{
-                  width: 12,
-                  height: 10,
-                  border: '1px dashed var(--border-strong)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  display: 'inline-block',
-                }}
-              />
-              Belum Ada Catatan
+            <span className="chart-legend-item">
+              <span className="legend-indicator legend-empty" />
+              <span>Belum Ada Catatan</span>
             </span>
           </div>
         </section>

@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   Camera,
   Upload,
+  Download,
+  Laptop,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { repository } from '../services/repository';
@@ -170,6 +172,49 @@ export const SettingsPage: React.FC = () => {
   const handleLogout = async () => {
     await repository.logoutAccount();
     await refreshUserData();
+  };
+
+  const backupFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleExportBackup = () => {
+    try {
+      const dataStr = repository.exportVaultBackup();
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `timecraft_cadangan_${user?.email ? user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'vault'}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsgSuccess('Berkas cadangan akun berhasil diunduh! Anda dapat mengimpornya di browser lain (seperti Edge) agar tidak perlu daftar ulang.');
+      setMsgError(null);
+    } catch {
+      setMsgError('Gagal mengekspor data cadangan.');
+    }
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const res = repository.importVaultBackup(content);
+        if (res.ok) {
+          setMsgSuccess(res.message);
+          setMsgError(null);
+          await refreshUserData();
+        } else {
+          setMsgError(res.message);
+        }
+      } catch {
+        setMsgError('Gagal memproses berkas cadangan.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const currentQuote = MOTIVATIONAL_QUOTES[quoteIndex % MOTIVATIONAL_QUOTES.length];
@@ -422,6 +467,58 @@ export const SettingsPage: React.FC = () => {
                 <li>Istirahatkan mata selama 5 menit setiap 25–50 menit menatap layar.</li>
               </ul>
             </div>
+
+            {/* Kartu Sinkronisasi & Pindah Peramban (Multi-Browser Sync) */}
+            {!repository.isUsingSupabase() && (
+              <div
+                style={{
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-blue-subtle)',
+                  backgroundColor: 'var(--surface-blue-light)',
+                  marginBottom: '1rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
+                  <Laptop size={16} color="var(--primary-blue)" />
+                  <span style={{ fontWeight: 600, fontSize: '0.86rem', color: 'var(--text-primary)' }}>
+                    Pindah / Buka di Peramban Lain
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: '0.75rem' }}>
+                  Ingin menggunakan akun dan data Anda di peramban lain (misalnya pindah dari <strong>Chrome ke Edge</strong> atau ke ponsel)? Unduh berkas cadangan akun ini lalu impor di peramban tujuan tanpa perlu mendaftar ulang.
+                </p>
+
+                <input
+                  ref={backupFileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  style={{ display: 'none' }}
+                  onChange={handleImportBackup}
+                />
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleExportBackup}
+                    style={{ fontSize: '0.78rem', padding: '0.5rem 0.75rem', justifyContent: 'center' }}
+                  >
+                    <Download size={14} />
+                    <span>Ekspor Akun (.json)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => backupFileInputRef.current?.click()}
+                    style={{ fontSize: '0.78rem', padding: '0.5rem 0.75rem', justifyContent: 'center' }}
+                  >
+                    <Upload size={14} />
+                    <span>Impor Cadangan</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Kartu Hubungi Pengembang Modern & Profesional */}
             <DeveloperContactCard showIntro={true} />

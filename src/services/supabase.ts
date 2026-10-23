@@ -29,8 +29,7 @@ export function getSupabaseConfigStatus(): SupabaseConfigStatus {
 
   if (
     rawUrl.includes('nama-proyek-anda.supabase.co') ||
-    rawAnonKey.includes('isi-dengan-anon-public-key') ||
-    rawUrl.includes('ocuclsbgvgwjujncst')
+    rawAnonKey.includes('isi-dengan-anon-public-key')
   ) {
     return {
       isConfigured: false,

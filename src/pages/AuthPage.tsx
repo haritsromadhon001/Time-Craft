@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   UserPlus,
   LogIn,
@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   KeyRound,
   CheckCircle2,
+  Upload,
 } from 'lucide-react';
 import { repository } from '../services/repository';
 import { getDetectedTimezone } from '../utils/time';
@@ -48,6 +49,35 @@ export const AuthPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImportVault = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const res = repository.importVaultBackup(content);
+        if (res.ok) {
+          setSuccessMsg(res.message);
+          setErrorMsg(null);
+          setMode('login');
+          const emails = repository.getLocalRegisteredEmails();
+          if (emails.length > 0) {
+            setEmail(emails[emails.length - 1].email);
+          }
+        } else {
+          setErrorMsg(res.message);
+        }
+      } catch {
+        setErrorMsg('Gagal memproses berkas cadangan akun.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,8 +245,22 @@ export const AuthPage: React.FC = () => {
 
         {errorMsg && (
           <div className="alert alert-error" role="alert" style={{ marginBottom: '1.15rem' }}>
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               <div>{errorMsg}</div>
+              {errorMsg.includes('belum terdaftar') && !repository.isUsingSupabase() && (
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    lineHeight: 1.45,
+                    paddingTop: '0.4rem',
+                    marginTop: '0.2rem',
+                    borderTop: '1px solid rgba(239, 68, 68, 0.25)',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  💡 <strong>Mendaftar di peramban lain (misal Google Chrome)?</strong> Penyimpanan lokal peramban terpisah satu sama lain. Anda dapat mengimpor berkas cadangan akun dari Chrome melalui tombol di bawah ini tanpa perlu daftar ulang.
+                </div>
+              )}
               {mode === 'login' && errorMsg.includes('Lupa Sandi') && (
                 <button
                   type="button"
@@ -516,6 +560,51 @@ export const AuthPage: React.FC = () => {
             )}
           </button>
         </form>
+
+        {/* Akses & Sinkronisasi Antar-Peramban (Multi-Browser Support) */}
+        {!repository.isUsingSupabase() && (
+          <div
+            style={{
+              marginTop: '1.25rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-color)',
+              textAlign: 'center',
+            }}
+          >
+            <input
+              ref={importFileInputRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: 'none' }}
+              onChange={handleImportVault}
+            />
+            <div
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-secondary)',
+                marginBottom: '0.5rem',
+              }}
+            >
+              Sudah punya akun di browser lain (Chrome / HP)?
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => importFileInputRef.current?.click()}
+              style={{
+                width: '100%',
+                fontSize: '0.82rem',
+                padding: '0.55rem',
+                justifyContent: 'center',
+                gap: '0.45rem',
+              }}
+              title="Pulihkan akun dari berkas cadangan JSON yang diekspor dari browser lain"
+            >
+              <Upload size={14} color="var(--primary-blue)" />
+              <span>Impor Akun dari Browser Lain (.json)</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
