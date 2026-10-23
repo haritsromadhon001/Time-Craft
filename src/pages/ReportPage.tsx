@@ -21,12 +21,12 @@ export const ReportPage: React.FC = () => {
   const endDate = searchParams.get('end') || todayStr;
 
   useEffect(() => {
-    document.title = 'TimeCraft — Screen Time & Focus (Kesadaran Digital & Pengelolaan Waktu)';
+    document.title = `Laporan Resmi TimeCraft — ${user?.display_name || 'Pengguna'}`;
     const timer = setTimeout(() => {
       window.print();
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((l) => l.activity_date >= startDate && l.activity_date <= endDate);
@@ -73,11 +73,14 @@ export const ReportPage: React.FC = () => {
   }, [completedFocusSessions]);
 
   const nowFormatted = new Date().toLocaleString('id-ID', {
-    dateStyle: 'long',
-    timeStyle: 'short',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
-  // Logika Analisis: Kritik & Saran
   const productivePct = grandTotal > 0 ? Math.round((productiveTotal / grandTotal) * 100) : 0;
   const nonProductivePct = 100 - productivePct;
 
@@ -85,10 +88,10 @@ export const ReportPage: React.FC = () => {
     if (grandTotal === 0) {
       return {
         critique:
-          'Belum ada catatan aktivitas pada periode ini. Konsistensi pencatatan manual atau pengukuran timer diperlukan agar kebiasaan layar dapat dievaluasi secara akurat.',
+          'Belum ada catatan aktivitas pada rentang tanggal ini. Konsistensi pencatatan manual atau pengukuran timer diperlukan agar kebiasaan layar dapat dievaluasi secara akurat.',
         suggestions: [
           'Mulai dengan mencatat penggunaan aplikasi utama setiap malam.',
-          'Nyalakan Timer Aktivitas sebelum memulai sesi belajar atau bekerja.',
+          'Nyalakan Focus Timer sebelum memulai sesi belajar atau bekerja.',
           'Tetapkan batas harian screen time pada menu Target & Refleksi.',
         ],
       };
@@ -96,33 +99,33 @@ export const ReportPage: React.FC = () => {
 
     let crit = '';
     if (productivePct >= 65) {
-      crit = `Pola penggunaan layar sangat sehat. Waktu produktif mencapai ${productivePct}%, menunjukkan kendali diri yang baik atas distraksi digital.`;
+      crit = `Pola penggunaan gawai sangat sehat dan tertib. Waktu produktif mencapai ${productivePct}%, membuktikan kendali diri yang tinggi dalam mengelola distraksi digital harian.`;
     } else if (productivePct >= 40) {
-      crit = `Keseimbangan cukup baik (${productivePct}% produktif vs ${nonProductivePct}% non-produktif). Namun, perhatikan lonjakan waktu pada kategori hiburan dan media sosial agar tidak memakan jam istirahat.`;
+      crit = `Keseimbangan cukup baik (${productivePct}% produktif vs ${nonProductivePct}% non-produktif). Namun, perhatikan durasi hiburan dan media sosial agar tidak memakan waktu istirahat utama.`;
     } else {
       crit = `Waktu non-produktif mendominasi sebesar ${nonProductivePct}% (${formatMinutesWithUnit(
         nonProductiveTotal,
-      )}). Scrolling pasif dan media sosial berisiko mengurangi konsentrasi serta energi mental harian.`;
+      )}). Disarankan membatasi penjelajahan pasif (*scrolling*) dan game berlebih demi menjaga daya fokus dan kebugaran mental.`;
     }
 
     const tips: string[] = [];
     if (completedFocusSessions.length === 0) {
-      tips.push('Gunakan Focus Timer minimal 1–2 sesi Pomodoro (25 menit) per hari untuk tugas prioritas.');
+      tips.push('Gunakan Focus Timer minimal 1–2 sesi Pomodoro (25 menit) per hari untuk menyelesaikan tugas berprioritas tinggi.');
     } else {
-      tips.push(`Pertahankan kebiasaan fokus (${completedFocusSessions.length} sesi selesai dengan total ${formatMinutesWithUnit(totalFocusMinutes)}).`);
+      tips.push(`Pertahankan konsistensi sesi fokus (${completedFocusSessions.length} sesi tuntas dengan total durasi ${formatMinutesWithUnit(totalFocusMinutes)}).`);
     }
 
     if (target?.max_daily_screentime_minutes && avgDaily > target.max_daily_screentime_minutes) {
       tips.push(
         `Rata-rata harian (${formatMinutesWithUnit(avgDaily)}) melebihi target batas harian (${formatMinutesWithUnit(
           target.max_daily_screentime_minutes,
-        )}). Kurangi durasi media sosial di malam hari.`,
+        )}). Kurangi akses media sosial 1 jam sebelum tidur.`,
       );
     } else {
-      tips.push('Terapkan aturan 20-20-20: istirahatkan mata selama 20 detik setiap 20 menit menatap layar.');
+      tips.push('Terapkan aturan 20-20-20: setiap 20 menit menatap layar, istirahatkan mata selama 20 detik memandang objek sejauh 6 meter.');
     }
 
-    tips.push('Lakukan refleksi mingguan di menu Target & Refleksi untuk mengevaluasi kendali diri.');
+    tips.push('Lakukan refleksi mingguan di menu Target & Refleksi untuk mengukur perkembangan produktivitas secara berkesinambungan.');
 
     return { critique: crit, suggestions: tips };
   }, [grandTotal, productivePct, nonProductivePct, nonProductiveTotal, completedFocusSessions, totalFocusMinutes, target, avgDaily]);
@@ -131,30 +134,33 @@ export const ReportPage: React.FC = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate('/');
+      navigate('/analytics');
     }
   };
 
   return (
     <div className="report-root-container">
       <style>{`
+        /* ====================================================================
+         * ATURAN CETAK / PDF (A4 STANDAR PROFESIONAL UNTUK HP & LAPTOP)
+         * ==================================================================== */
         @page {
           size: A4 portrait;
-          margin: 8mm 10mm;
+          margin: 12mm 15mm;
         }
+
         @media print {
           html, body {
             margin: 0 !important;
             padding: 0 !important;
             height: auto !important;
-            min-height: 100% !important;
             background-color: #ffffff !important;
+            color: #0f172a !important;
             font-size: 11px !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .no-print-bar,
-          .mobile-scroll-hint {
+          .no-print-bar {
             display: none !important;
           }
           .report-root-container {
@@ -177,504 +183,465 @@ export const ReportPage: React.FC = () => {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
-          .report-header-box {
+          .header-bar {
             display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
             justify-content: space-between !important;
-            gap: 12px !important;
-            padding-bottom: 12px !important;
-            border-bottom: 2px solid #dc2626 !important;
-          }
-          .brand-group-left {
-            display: flex !important;
             align-items: center !important;
-            gap: 10px !important;
+            padding-bottom: 14px !important;
+            border-bottom: 2px solid #2563eb !important;
+            margin-bottom: 14px !important;
           }
-          .brand-name-text {
-            font-size: 19px !important;
-          }
-          .brand-slogan-text {
-            font-size: 10.5px !important;
-            color: #dc2626 !important;
-          }
-          .meta-text-box {
-            text-align: right !important;
-            background: none !important;
-            border: none !important;
-            padding: 0 !important;
-            width: auto !important;
-            font-size: 10.5px !important;
-          }
-          .period-strip {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding: 4px 10px !important;
-            font-size: 11px !important;
-            margin: 10px 0 12px !important;
-          }
-          .metrics-4-row {
+          .metrics-grid {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
-            gap: 8px !important;
-            margin-bottom: 12px !important;
+            gap: 10px !important;
+            margin-bottom: 16px !important;
           }
-          .metric-cell {
-            padding: 7px 10px !important;
-          }
-          .metric-cell-label {
-            font-size: 9.5px !important;
-          }
-          .metric-cell-val {
-            font-size: 14.5px !important;
-          }
-          .section-headline {
-            font-size: 11.5px !important;
-            margin: 12px 0 5px !important;
-          }
-          .table-responsive-box {
-            overflow: visible !important;
-            width: 100% !important;
-            margin-bottom: 8px !important;
-          }
-          .compact-table {
-            min-width: 100% !important;
-            width: 100% !important;
-            font-size: 10.5px !important;
-          }
-          .compact-table th,
-          .compact-table td {
-            padding: 4px 7px !important;
-            white-space: normal !important;
-          }
-          .eval-box {
+          .eval-grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 10px !important;
-            padding: 9px 12px !important;
-            margin-top: 10px !important;
+            gap: 12px !important;
+            margin-bottom: 14px !important;
           }
-          .footer-strip {
+          .footer-sign-block {
             display: flex !important;
-            flex-direction: row !important;
             justify-content: space-between !important;
-            align-items: center !important;
-            margin-top: auto !important;
-            padding-top: 10px !important;
-            font-size: 9.5px !important;
+            align-items: flex-end !important;
+            margin-top: 24px !important;
+            padding-top: 14px !important;
+            border-top: 1px dashed #cbd5e1 !important;
+            page-break-inside: avoid !important;
           }
         }
 
-        /* Tampilan Layar (Screen) */
+        /* ====================================================================
+         * TAMPILAN PRATINJAU DI LAYAR (DESKTOP / LAPTOP & HP)
+         * ==================================================================== */
         .report-root-container {
           min-height: 100vh;
           background-color: #090b10;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          color: #111827;
-          padding-bottom: 30px;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          color: #0f172a;
+          padding-bottom: 40px;
+          box-sizing: border-box;
         }
+
         .no-print-bar {
           position: sticky;
           top: 0;
           z-index: 999;
-          background-color: #0d1118;
+          background-color: #0f172a;
           color: #ffffff;
-          padding: 10px 20px;
+          padding: 12px 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-          border-bottom: 1px solid #242d3d;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+          border-bottom: 1px solid #1e293b;
         }
+
         .no-print-bar-title {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
+
+        .no-print-bar-title strong {
+          font-size: 14px;
+          letter-spacing: -0.2px;
+        }
+
         .no-print-bar-actions {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
+
         .btn-print-action {
-          background-color: #dc2626;
+          background-color: #2563eb;
           color: #ffffff;
           border: none;
-          border-radius: 6px;
-          padding: 7px 14px;
-          font-size: 12px;
+          border-radius: 7px;
+          padding: 8px 16px;
+          font-size: 12.5px;
           font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+          transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+
+        .btn-print-action:hover {
+          background-color: #1d4ed8;
+          transform: translateY(-1px);
+        }
+
+        .btn-back-action {
+          background-color: transparent;
+          color: #cbd5e1;
+          border: 1px solid #334155;
+          border-radius: 7px;
+          padding: 8px 14px;
+          font-size: 12.5px;
+          font-weight: 500;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 6px;
           white-space: nowrap;
-          transition: background-color 0.15s;
+          transition: all 0.15s ease;
         }
-        .btn-print-action:hover {
-          background-color: #b91c1c;
-        }
-        .btn-back-action {
-          background-color: transparent;
-          color: #cbd5e1;
-          border: 1px solid #475569;
-          border-radius: 6px;
-          padding: 7px 12px;
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          white-space: nowrap;
-          transition: all 0.15s;
-        }
+
         .btn-back-action:hover {
           color: #ffffff;
-          border-color: #94a3b8;
-          background-color: rgba(255, 255, 255, 0.05);
+          border-color: #64748b;
+          background-color: rgba(255, 255, 255, 0.06);
         }
+
+        /* Lembar Dokumen A4 */
         .report-paper-a4 {
-          max-width: 780px;
-          min-height: 270mm;
-          margin: 16px auto;
+          max-width: 820px;
+          margin: 20px auto;
           background-color: #ffffff;
-          padding: 24px 28px;
-          border-radius: 8px;
+          padding: 28px 32px;
+          border-radius: 10px;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
         }
-        .report-header-box {
+
+        /* Header Dokumen Resmi */
+        .header-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 14px;
+          border-bottom: 2px solid #2563eb;
+          margin-bottom: 14px;
+        }
+
+        .brand-box {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding-bottom: 12px;
-          border-bottom: 2px solid #dc2626;
           gap: 12px;
         }
-        .brand-group-left {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .brand-logo-img {
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-          flex-shrink: 0;
-        }
-        .brand-name-text {
-          font-size: 19px;
+
+        .brand-name {
+          font-size: 20px;
           font-weight: 800;
-          color: #111827;
-          letter-spacing: -0.02em;
+          color: #0f172a;
+          letter-spacing: -0.4px;
           line-height: 1.15;
         }
-        .brand-slogan-text {
+
+        .brand-tagline {
           font-size: 10.5px;
-          font-weight: 600;
-          color: #dc2626;
-          letter-spacing: 0.02em;
+          color: #64748b;
+          font-weight: 500;
         }
-        .meta-text-box {
+
+        .doc-badge {
           text-align: right;
-          font-size: 10.5px;
-          color: #4b5563;
-          line-height: 1.4;
         }
-        .meta-text-box strong {
-          color: #111827;
-        }
-        .period-strip {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 6px 12px;
-          margin: 10px 0 12px;
-          padding: 5px 10px;
-          background-color: #eff6ff;
+
+        .doc-pill {
+          display: inline-block;
+          background: #eff6ff;
+          color: #2563eb;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 999px;
           border: 1px solid #bfdbfe;
-          border-radius: 5px;
-          font-size: 11px;
-          color: #1e40af;
-          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
-        .metrics-4-row {
+
+        .doc-date {
+          font-size: 11px;
+          color: #475569;
+          margin-top: 4px;
+          font-weight: 500;
+        }
+
+        /* Informasi Pengguna & Periode */
+        .info-card {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 12px 16px;
+          margin-bottom: 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        /* 4 Kartu Metrik Ringkasan */
+        .metrics-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 8px;
-          margin-bottom: 12px;
+          gap: 10px;
+          margin-bottom: 16px;
         }
-        .metric-cell {
-          background-color: #f8fafc;
+
+        .metric-box {
+          background: #ffffff;
           border: 1px solid #e2e8f0;
-          border-radius: 6px;
-          padding: 7px 10px;
+          border-radius: 8px;
+          padding: 11px 12px;
+          text-align: center;
         }
-        .metric-cell-label {
-          font-size: 9.5px;
+
+        .metric-lbl {
+          font-size: 10.5px;
           font-weight: 600;
           color: #64748b;
           text-transform: uppercase;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.4px;
         }
-        .metric-cell-val {
-          font-size: 14.5px;
-          font-weight: 700;
-          color: #111827;
-          margin-top: 2px;
+
+        .metric-val {
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f172a;
+          margin-top: 3px;
         }
-        .section-headline {
-          font-size: 11.5px;
+
+        /* Judul Seksi */
+        .section-header {
+          font-size: 12px;
           font-weight: 700;
-          color: #111827;
-          margin: 12px 0 5px;
-          padding-bottom: 3px;
-          border-bottom: 1px solid #e5e7eb;
+          color: #0f172a;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 8px;
           display: flex;
           justify-content: space-between;
-          align-items: baseline;
-          flex-wrap: wrap;
-          gap: 4px;
+          align-items: center;
         }
-        .mobile-scroll-hint {
-          display: none;
-        }
-        .table-responsive-box {
+
+        /* Tabel Distribusi Waktu */
+        .table-wrap {
           width: 100%;
           overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          margin-bottom: 8px;
+          margin-bottom: 16px;
         }
-        .compact-table {
+
+        table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 10.5px;
+          font-size: 11.5px;
         }
-        .compact-table th {
-          background-color: #f1f5f9;
-          color: #475569;
+
+        th {
+          background: #0f172a;
+          color: #ffffff;
+          padding: 9px 12px;
           text-align: left;
-          padding: 4px 7px;
-          font-weight: 600;
-          font-size: 9.5px;
+          font-size: 10.5px;
+          font-weight: 700;
           text-transform: uppercase;
-          border-bottom: 1px solid #cbd5e1;
+          letter-spacing: 0.5px;
         }
-        .compact-table td {
-          padding: 4px 7px;
-          border-bottom: 1px solid #f1f5f9;
+
+        td {
+          padding: 8px 12px;
+          border-bottom: 1px solid #e2e8f0;
           color: #1e293b;
         }
-        .compact-table tr:nth-child(even) td {
-          background-color: #f8fafc;
+
+        tr:nth-child(even) td {
+          background: #f8fafc;
         }
-        .bar-bg {
+
+        .status-pill {
+          display: inline-block;
+          padding: 2.5px 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.2px;
+        }
+
+        .pill-prod {
+          background: #ecfdf5;
+          color: #059669;
+          border: 1px solid #a7f3d0;
+        }
+
+        .pill-nonprod {
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #cbd5e1;
+        }
+
+        .bar-track {
           width: 100%;
-          height: 6px;
-          background-color: #e2e8f0;
+          height: 7px;
+          background: #e2e8f0;
           border-radius: 999px;
           overflow: hidden;
         }
+
         .bar-fill {
           height: 100%;
-          background-color: #dc2626;
+          background: linear-gradient(90deg, #2563eb, #3b82f6);
           border-radius: 999px;
         }
-        .badge-compact {
-          display: inline-block;
-          padding: 1.5px 5px;
-          border-radius: 3px;
-          font-size: 9px;
-          font-weight: 600;
-        }
-        .badge-green {
-          background-color: #f0fdf4;
-          color: #166534;
-          border: 1px solid #bbf7d0;
-        }
-        .badge-gray {
-          background-color: #f1f5f9;
-          color: #475569;
-          border: 1px solid #e2e8f0;
-        }
-        .eval-box {
+
+        /* Grid Evaluasi & Rekomendasi (Kritik & Saran) */
+        .eval-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          background-color: #f8fafc;
-          border: 1px solid #cbd5e1;
-          border-radius: 7px;
-          padding: 9px 12px;
-          margin-top: 10px;
-        }
-        .eval-col-title {
-          font-size: 10.5px;
-          font-weight: 700;
-          color: #0f172a;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          margin-bottom: 4px;
-        }
-        .eval-col-desc {
-          font-size: 10px;
-          color: #334155;
-          line-height: 1.45;
-        }
-        .eval-list {
-          padding-left: 14px;
-          font-size: 10px;
-          color: #334155;
-          line-height: 1.4;
-          margin: 0;
-        }
-        .footer-strip {
-          margin-top: auto;
-          padding-top: 10px;
-          border-top: 1px solid #cbd5e1;
-          font-size: 9.5px;
-          color: #64748b;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: 100%;
-          box-sizing: border-box;
+          gap: 12px;
+          margin-bottom: 14px;
         }
 
-        /* Penyesuaian Responsif Khusus Layar HP / Mobile */
+        .eval-card {
+          border-radius: 8px;
+          padding: 12px 14px;
+          font-size: 11.5px;
+          line-height: 1.5;
+        }
+
+        .eval-card-critique {
+          background: #fffbeb;
+          border: 1px solid #fde68a;
+          color: #92400e;
+        }
+
+        .eval-card-suggestions {
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          color: #166534;
+        }
+
+        .eval-card-head {
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 6px;
+          font-size: 11.5px;
+        }
+
+        .eval-card ul {
+          margin: 0;
+          padding-left: 16px;
+        }
+
+        .eval-card li {
+          margin-bottom: 4px;
+        }
+
+        /* Kotak Pedoman Kebiasaan Sehat */
+        .insight-box {
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          border-radius: 8px;
+          padding: 11px 14px;
+          margin-bottom: 18px;
+          font-size: 11px;
+          color: #1e40af;
+          line-height: 1.5;
+        }
+
+        /* Footer Pengesahan Resmi */
+        .footer-sign-block {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-top: 20px;
+          padding-top: 14px;
+          border-top: 1px dashed #cbd5e1;
+        }
+
+        .system-watermark {
+          font-size: 10.5px;
+          color: #94a3b8;
+          max-width: 360px;
+          line-height: 1.45;
+        }
+
+        .sign-box {
+          text-align: center;
+          min-width: 190px;
+        }
+
+        .sign-line {
+          margin-top: 46px;
+          border-bottom: 1px solid #334155;
+        }
+
+        /* ====================================================================
+         * RESPONSIVITAS KHUSUS TAMPILAN LAYAR HP (MOBILE PREVIEW)
+         * ==================================================================== */
         @media screen and (max-width: 640px) {
           .no-print-bar {
-            padding: 10px 12px;
+            padding: 10px 14px;
             flex-direction: column;
             align-items: stretch;
             gap: 10px;
           }
           .no-print-bar-title {
             justify-content: center;
-            text-align: center;
           }
           .no-print-bar-actions {
             width: 100%;
-            display: flex;
-            gap: 8px;
           }
           .btn-print-action,
           .btn-back-action {
             flex: 1;
             justify-content: center;
-            padding: 8px 10px;
             font-size: 12px;
+            padding: 8px 10px;
           }
           .report-paper-a4 {
-            margin: 10px auto;
-            padding: 14px 12px;
-            width: calc(100% - 16px);
-            min-height: auto;
+            margin: 10px 8px;
+            padding: 16px 14px;
+            max-width: 100%;
             border-radius: 8px;
           }
-          .report-header-box {
+          .header-bar {
             flex-direction: column;
             align-items: flex-start;
             gap: 10px;
-            padding-bottom: 10px;
           }
-          .brand-group-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-          }
-          .brand-name-text {
-            font-size: 17px;
-          }
-          .brand-slogan-text {
-            font-size: 9.5px;
-            line-height: 1.3;
-          }
-          .meta-text-box {
+          .doc-badge {
             text-align: left;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 7px 10px;
-            width: 100%;
-            box-sizing: border-box;
-            font-size: 10px;
-            line-height: 1.45;
           }
-          .period-strip {
+          .info-card {
             flex-direction: column;
             align-items: flex-start;
-            gap: 4px;
-            padding: 6px 10px;
-            font-size: 10px;
           }
-          .metrics-4-row {
+          .metrics-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
-            margin-bottom: 10px;
           }
-          .metric-cell {
-            padding: 8px 9px;
-          }
-          .metric-cell-label {
-            font-size: 9px;
-            line-height: 1.25;
-          }
-          .metric-cell-val {
-            font-size: 13.5px;
-            margin-top: 3px;
-          }
-          .section-headline {
-            font-size: 11px;
-            margin: 10px 0 6px;
-          }
-          .mobile-scroll-hint {
-            display: inline;
-            font-size: 9px;
-            color: #dc2626;
-            font-weight: 500;
-          }
-          .compact-table {
-            min-width: 490px;
-            font-size: 10px;
-          }
-          .compact-table th,
-          .compact-table td {
-            padding: 5px 7px;
-            white-space: nowrap;
-          }
-          .compact-table th:last-child,
-          .compact-table td:last-child {
-            white-space: normal;
-          }
-          .eval-box {
+          .eval-grid {
             grid-template-columns: 1fr;
             gap: 10px;
-            padding: 10px;
-            margin-top: 8px;
           }
-          .eval-col-title {
-            font-size: 10.5px;
-          }
-          .eval-col-desc,
-          .eval-list {
-            font-size: 9.5px;
-            line-height: 1.4;
-          }
-          .footer-strip {
+          .footer-sign-block {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-            font-size: 9px;
-            margin-top: 14px;
+            align-items: stretch;
+            gap: 18px;
+          }
+          .sign-box {
+            text-align: right;
+          }
+          .sign-line {
+            margin-top: 36px;
+            width: 180px;
+            margin-left: auto;
           }
         }
       `}</style>
@@ -682,106 +649,132 @@ export const ReportPage: React.FC = () => {
       {/* Bilah Aksi di Layar */}
       <div className="no-print-bar">
         <div className="no-print-bar-title">
-          <strong style={{ fontSize: '13px' }}>TimeCraft — Laporan Resmi A4</strong>
+          <strong style={{ fontSize: '13px' }}>TimeCraft — Laporan Resmi Pengelolaan Waktu</strong>
         </div>
         <div className="no-print-bar-actions">
           <button type="button" className="btn-print-action" onClick={() => window.print()}>
-            <Printer size={14} />
+            <Printer size={15} />
             <span>Simpan PDF / Cetak</span>
           </button>
           <button type="button" className="btn-back-action" onClick={handleBack}>
-            <ArrowLeft size={13} />
+            <ArrowLeft size={14} />
             <span>Kembali</span>
           </button>
         </div>
       </div>
 
-      {/* Lembar A4 Tunggal */}
+      {/* Lembar Dokumen Resmi A4 */}
       <div className="report-paper-a4">
-        {/* Kop Surat Resmi */}
-        <header className="report-header-box">
-          <div className="brand-group-left">
-            <svg className="brand-logo-img" viewBox="0 0 64 64" fill="none">
-              <rect width="64" height="64" rx="16" fill="#DC2626" />
+        {/* Header Resmi TimeCraft */}
+        <header className="header-bar">
+          <div className="brand-box">
+            <svg width="42" height="42" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+              <rect width="64" height="64" rx="14" fill="#2563EB" />
               <circle cx="32" cy="32" r="20" stroke="#FFFFFF" strokeWidth="4.5" strokeOpacity="0.95" />
-              <circle cx="32" cy="32" r="14" stroke="#FCA5A5" strokeWidth="2" strokeDasharray="4 4" />
+              <circle cx="32" cy="32" r="14" stroke="#93C5FD" strokeWidth="2" strokeDasharray="4 4" />
               <path d="M32 20V32L40 37" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="32" cy="12" r="2.5" fill="#FEF2F2" />
+              <circle cx="32" cy="12" r="2.5" fill="#EFF6FF" />
             </svg>
             <div>
-              <div className="brand-name-text">TimeCraft</div>
-              <div className="brand-slogan-text">Screen Time &amp; Focus — Kesadaran Digital &amp; Pengelolaan Waktu</div>
+              <div className="brand-name">TimeCraft</div>
+              <div className="brand-tagline">Screen Time &amp; Focus Monitoring Platform</div>
             </div>
           </div>
-          <div className="meta-text-box">
-            <div>Pengguna: <strong>{user?.display_name || 'Pengguna'}</strong> ({user?.email})</div>
-            <div>Zona Waktu: <strong>{timezone}</strong> • Dicetak: <strong>{nowFormatted}</strong></div>
+          <div className="doc-badge">
+            <span className="doc-pill">Laporan Resmi Pengelolaan Waktu</span>
+            <div className="doc-date">Dicetak: {nowFormatted} WIB</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>time-craft-ruby.vercel.app</div>
           </div>
         </header>
 
-        {/* Periode Strip */}
-        <div className="period-strip">
-          <span>Periode Analisis: <strong>{startDate}</strong> s/d <strong>{endDate}</strong></span>
-          <span>Status: <strong>{uniqueDays} hari aktif tercatat</strong></span>
-        </div>
-
-        {/* 4 Metrik Ringkasan */}
-        <div className="metrics-4-row">
-          <div className="metric-cell">
-            <div className="metric-cell-label">Total Screen Time</div>
-            <div className="metric-cell-val">{formatMinutesWithUnit(grandTotal)}</div>
+        {/* Informasi Akun & Periode */}
+        <div className="info-card">
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
+              {user?.display_name || 'Pengguna TimeCraft'}
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+              Akun: <strong>{user?.email || '—'}</strong> • Zona Waktu: <strong>{timezone}</strong>
+            </div>
           </div>
-          <div className="metric-cell">
-            <div className="metric-cell-label">Rata-rata Harian</div>
-            <div className="metric-cell-val">{formatMinutesWithUnit(avgDaily)}</div>
-          </div>
-          <div className="metric-cell">
-            <div className="metric-cell-label">Waktu Produktif</div>
-            <div className="metric-cell-val">{formatMinutesWithUnit(productiveTotal)} ({productivePct}%)</div>
-          </div>
-          <div className="metric-cell">
-            <div className="metric-cell-label">Sesi Fokus Selesai</div>
-            <div className="metric-cell-val">{completedFocusSessions.length} sesi ({formatMinutesWithUnit(totalFocusMinutes)})</div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Periode Analisis</div>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#2563eb' }}>
+              {startDate} <span style={{ fontWeight: 400, color: '#64748b' }}>s/d</span> {endDate}
+            </div>
+            <div style={{ fontSize: '10.5px', color: '#475569', marginTop: '1px' }}>
+              Status: <strong>{uniqueDays} hari aktif tercatat</strong>
+            </div>
           </div>
         </div>
 
-        {/* Tabel Distribusi Kategori */}
-        <div className="section-headline">
+        {/* 4 Kartu Metrik Ringkasan */}
+        <div className="metrics-grid">
+          <div className="metric-box">
+            <div className="metric-lbl">Total Screen Time</div>
+            <div className="metric-val">{formatMinutesWithUnit(grandTotal)}</div>
+          </div>
+          <div className="metric-box">
+            <div className="metric-lbl">Rerata Harian</div>
+            <div className="metric-val">{formatMinutesWithUnit(avgDaily)}</div>
+          </div>
+          <div className="metric-box">
+            <div className="metric-lbl">Waktu Produktif</div>
+            <div className="metric-val" style={{ color: productivePct >= 50 ? '#059669' : '#d97706' }}>
+              {productivePct}% <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b' }}>({formatMinutesWithUnit(productiveTotal)})</span>
+            </div>
+          </div>
+          <div className="metric-box">
+            <div className="metric-lbl">Sesi Fokus Tuntas</div>
+            <div className="metric-val" style={{ color: '#2563eb' }}>
+              {completedFocusSessions.length} <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b' }}>({formatMinutesWithUnit(totalFocusMinutes)})</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabel Distribusi Waktu per Kategori */}
+        <div className="section-header">
           <span>Distribusi Waktu Berdasarkan Kategori</span>
-          <span style={{ fontSize: '9.5px', color: '#64748b' }}>
-            Dari {filteredLogs.length} catatan aktivitas{' '}
-            <span className="mobile-scroll-hint">(Geser tabel &rarr;)</span>
+          <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'none', fontWeight: 500 }}>
+            Total {filteredLogs.length} catatan aktivitas
           </span>
         </div>
 
-        <div className="table-responsive-box">
-          <table className="compact-table">
+        <div className="table-wrap">
+          <table>
             <thead>
               <tr>
+                <th style={{ width: '36px', textAlign: 'center' }}>No</th>
                 <th>Kategori Aktivitas</th>
-                <th>Klasifikasi</th>
-                <th>Durasi</th>
-                <th>Persentase</th>
-                <th style={{ width: '28%' }}>Proporsi Visual</th>
+                <th style={{ width: '130px', textAlign: 'center' }}>Klasifikasi</th>
+                <th style={{ width: '150px' }}>Durasi Layar</th>
+                <th style={{ width: '85px', textAlign: 'center' }}>Porsi</th>
+                <th style={{ width: '22%' }}>Proporsi Visual</th>
               </tr>
             </thead>
             <tbody>
-              {Object.values(ACTIVITY_CATEGORIES).map((cat) => {
+              {Object.values(ACTIVITY_CATEGORIES).map((cat, idx) => {
                 const mins = totals[cat.id] || 0;
                 const pct = grandTotal > 0 ? Math.round((mins / grandTotal) * 100) : 0;
                 return (
                   <tr key={cat.id}>
-                    <td><strong>{cat.label}</strong></td>
+                    <td style={{ textAlign: 'center', color: '#64748b', fontWeight: 600 }}>{idx + 1}</td>
                     <td>
-                      <span className={`badge-compact ${cat.isProductive ? 'badge-green' : 'badge-gray'}`}>
-                        {cat.isProductive ? 'Produktif' : 'Non-Produktif'}
+                      <strong style={{ color: '#0f172a' }}>{cat.label}</strong>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`status-pill ${cat.isProductive ? 'pill-prod' : 'pill-nonprod'}`}>
+                        {cat.isProductive ? '✓ Produktif' : 'Non-Produktif'}
                       </span>
                     </td>
-                    <td>{mins} menit ({(mins / 60).toFixed(1)} jam)</td>
-                    <td><strong>{pct}%</strong></td>
                     <td>
-                      <div className="bar-bg">
-                        <div className="bar-fill" style={{ width: `${pct}%` }} />
+                      <strong style={{ color: '#0f172a' }}>{mins} menit</strong>{' '}
+                      <span style={{ color: '#64748b', fontSize: '10.5px' }}>({(mins / 60).toFixed(1)} jam)</span>
+                    </td>
+                    <td style={{ textAlign: 'center', fontWeight: 700, color: '#0f172a' }}>{pct}%</td>
+                    <td>
+                      <div className="bar-track">
+                        <div className="bar-fill" style={{ width: `${pct}%`, background: cat.isProductive ? '#059669' : '#3b82f6' }} />
                       </div>
                     </td>
                   </tr>
@@ -791,25 +784,25 @@ export const ReportPage: React.FC = () => {
           </table>
         </div>
 
-        {/* Bagian Kritik & Saran (Evaluasi Produktivitas & Keseimbangan Digital) */}
-        <div className="section-headline" style={{ marginTop: '10px' }}>
+        {/* Bagian Evaluasi & Rekomendasi (Kritik & Saran) */}
+        <div className="section-header" style={{ marginTop: '4px' }}>
           <span>Evaluasi Perilaku &amp; Rekomendasi (Kritik &amp; Saran)</span>
         </div>
 
-        <div className="eval-box">
-          <div>
-            <div className="eval-col-title">
-              <AlertCircle size={13} color="#dc2626" />
-              <span>Analisis &amp; Kritik Pola Penggunaan</span>
+        <div className="eval-grid">
+          <div className="eval-card eval-card-critique">
+            <div className="eval-card-head">
+              <AlertCircle size={14} color="#d97706" />
+              <span>Analisis Pola Penggunaan Layar</span>
             </div>
-            <p className="eval-col-desc">{evaluation.critique}</p>
+            <div>{evaluation.critique}</div>
           </div>
-          <div>
-            <div className="eval-col-title">
-              <Lightbulb size={13} color="#16a34a" />
+          <div className="eval-card eval-card-suggestions">
+            <div className="eval-card-head">
+              <Lightbulb size={14} color="#16a34a" />
               <span>Saran Perbaikan Kebiasaan Layar</span>
             </div>
-            <ul className="eval-list">
+            <ul>
               {evaluation.suggestions.map((s, idx) => (
                 <li key={idx}>{s}</li>
               ))}
@@ -817,14 +810,26 @@ export const ReportPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer Dokumen Resmi */}
-        <footer className="footer-strip">
-          <div>
-            <strong>TimeCraft</strong> — Kesadaran Digital &amp; Pengelolaan Waktu
-            <span style={{ color: '#94a3b8', margin: '0 6px' }}>•</span>
-            <span style={{ color: '#dc2626', fontWeight: 600 }}>Laporan Evaluasi Resmi</span>
+        {/* Catatan Edukasi & Pengawasan */}
+        <div className="insight-box">
+          <strong>💡 Pedoman Kebiasaan Layar Sehat TimeCraft:</strong><br/>
+          Biasakan aturan istirahat mata 20-20-20 (memandang jarak 6 meter selama 20 detik setiap 20 menit menatap layar) serta hindari paparan layar 1 jam sebelum waktu tidur demi kualitas istirahat dan ketajaman fokus yang maksimal.
+        </div>
+
+        {/* Tanda Tangan & Verifikasi Resmi Dokumen */}
+        <footer className="footer-sign-block">
+          <div className="system-watermark">
+            <strong>TimeCraft Verified Document</strong><br />
+            Dokumen elektronik resmi ini diterbitkan secara otomatis oleh platform TimeCraft (time-craft-ruby.vercel.app). Data dicatat secara aman dari aktivitas perangkat pengguna.
           </div>
-          <div>Dokumen Laporan Resmi • Halaman 1 dari 1</div>
+          <div className="sign-box">
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Mengetahui &amp; Memverifikasi,</div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>Pengguna / Pemilik Akun</div>
+            <div className="sign-line" />
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
+              {user?.display_name || user?.email}
+            </div>
+          </div>
         </footer>
       </div>
     </div>
