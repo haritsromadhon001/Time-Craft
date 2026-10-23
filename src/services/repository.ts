@@ -295,7 +295,7 @@ export class TimeCraftRepository {
         });
         if (error) {
           if (this.isNetworkFetchError(error)) {
-            console.warn('Supabase tidak dapat dijangkau, otomatis beralih memeriksa Local Vault.');
+            console.warn('Layanan cloud tidak dapat dijangkau, beralih ke penyimpanan lokal.');
             this.supabaseUnreachable = true;
           } else {
             const msg = (error.message || '').toLowerCase();
@@ -303,13 +303,13 @@ export class TimeCraftRepository {
               return {
                 user: null,
                 error:
-                  'Email Anda belum dikonfirmasi. Silakan periksa inbox/spam email Anda, atau nonaktifkan toggle "Confirm email" di dashboard Supabase (Authentication -> Providers -> Email).',
+                  'Alamat email Anda belum dikonfirmasi. Silakan periksa kotak masuk atau spam email Anda untuk mengaktifkan akun, atau hubungi administrator.',
               };
             }
             return {
               user: null,
               error:
-                'Email atau kata sandi salah, atau akun ini belum didaftarkan di database Supabase. Jika Anda baru saja menghubungkan database Supabase, silakan klik tab "Daftar Akun" di atas untuk mendaftarkan akun Anda.',
+                'Alamat email atau kata sandi tidak sesuai. Mohon periksa kembali ejaan email Anda (pastikan tidak ada huruf yang terlewat) dan pastikan kata sandi sudah benar.',
             };
           }
         } else {
@@ -320,7 +320,7 @@ export class TimeCraftRepository {
         if (this.isNetworkFetchError(err)) {
           this.supabaseUnreachable = true;
         } else {
-          return { user: null, error: 'Gagal menghubungi layanan login.' };
+          return { user: null, error: 'Terjadi kendala saat menghubungkan ke layanan autentikasi. Silakan coba beberapa saat lagi.' };
         }
       }
     }
@@ -330,7 +330,7 @@ export class TimeCraftRepository {
     if (!found) {
       return {
         user: null,
-        error: `Alamat email "${cleanEmail}" belum terdaftar. Silakan buat akun baru terlebih dahulu melalui tab Daftar Akun.`,
+        error: `Alamat email "${cleanEmail}" belum terdaftar. Mohon periksa kembali ejaan alamat email Anda atau buat akun baru di tab Daftar Akun.`,
       };
     }
 
@@ -338,7 +338,7 @@ export class TimeCraftRepository {
       return {
         user: null,
         error:
-          'Kata sandi yang Anda masukkan tidak sesuai. Silakan periksa kembali atau gunakan opsi Lupa Sandi untuk mengatur ulang kata sandi Anda.',
+          'Kata sandi yang Anda masukkan tidak sesuai. Silakan periksa kembali atau gunakan opsi Ganti Kata Sandi untuk memperbarui akses Anda.',
       };
     }
 
