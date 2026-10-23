@@ -1214,7 +1214,10 @@ export class TimeCraftRepository {
     const vault = readLocalVault(this.customStore);
     const tombstoneSet = new Set(vault.deleted_classrooms || []);
     const isNotDeleted = (c: Classroom) =>
-      !tombstoneSet.has(c.id) && !tombstoneSet.has(c.class_code);
+      !tombstoneSet.has(c.id) &&
+      !tombstoneSet.has(c.class_code) &&
+      !(c.description && c.description.includes('[FAMILY_PORTAL]')) &&
+      !(c.class_code && c.class_code.startsWith('FAM-'));
 
     // 1. Ambil dari Supabase jika aktif (sumber data utama)
     if (this.isUsingSupabase() && supabase) {
@@ -1250,7 +1253,10 @@ export class TimeCraftRepository {
     const vault = readLocalVault(this.customStore);
     const tombstoneSet = new Set(vault.deleted_classrooms || []);
     const isNotDeleted = (c: Classroom) =>
-      !tombstoneSet.has(c.id) && !tombstoneSet.has(c.class_code);
+      !tombstoneSet.has(c.id) &&
+      !tombstoneSet.has(c.class_code) &&
+      !(c.description && c.description.includes('[FAMILY_PORTAL]')) &&
+      !(c.class_code && c.class_code.startsWith('FAM-'));
 
     if (this.isUsingSupabase() && supabase) {
       try {
@@ -1623,31 +1629,29 @@ export class TimeCraftRepository {
           .select()
           .maybeSingle();
 
-        if (error) {
-          console.warn('Gagal simpan keluarga ke Supabase, simpan ke cadangan lokal:', error.message);
-          const vault = readLocalVault(this.customStore);
-          if (!vault.family_groups) vault.family_groups = [];
-          vault.family_groups.push(newFamily);
-          writeLocalVault(vault, this.customStore);
-          return { family: newFamily };
-        } else if (data) {
-          const vault = readLocalVault(this.customStore);
-          if (!vault.family_groups) vault.family_groups = [];
-          if (!vault.family_groups.some((f) => f.id === data.id)) {
-            vault.family_groups.push(data as FamilyGroup);
-            writeLocalVault(vault, this.customStore);
-          }
-          return { family: data as FamilyGroup };
+        if (error || !data) {
+          // Jika tabel family_groups belum aktif di database Supabase, simpan ke tabel classrooms dengan label [FAMILY_PORTAL]
+          const classroomPayload = {
+            id: newFamily.id,
+            teacher_id: newFamily.parent_id,
+            class_code: newFamily.family_code,
+            class_name: newFamily.family_name,
+            description: `[FAMILY_PORTAL] ${newFamily.description || ''}`,
+            created_at: newFamily.created_at,
+          };
+          await supabase.from('classrooms').insert(classroomPayload);
         }
       } catch (err: any) {
-        console.warn('Koneksi keluarga cloud bermasalah:', err);
+        console.warn('Kendala koneksi keluarga cloud:', err);
       }
     }
 
     const vault = readLocalVault(this.customStore);
     if (!vault.family_groups) vault.family_groups = [];
-    vault.family_groups.push(newFamily);
-    writeLocalVault(vault, this.customStore);
+    if (!vault.family_groups.some((f) => f.id === newFamily.id)) {
+      vault.family_groups.push(newFamily);
+      writeLocalVault(vault, this.customStore);
+    }
     return { family: newFamily };
   }
 
@@ -1665,6 +1669,7 @@ export class TimeCraftRepository {
 
     let count = 0;
     for (const fam of localFamilies) {
+      let synced = false;
       try {
         const { data: existing } = await supabase
           .from('family_groups')
@@ -1674,9 +1679,37 @@ export class TimeCraftRepository {
 
         if (!existing) {
           const { error } = await supabase.from('family_groups').insert(fam);
-          if (!error) count++;
+          if (!error) {
+            count++;
+            synced = true;
+          }
+        } else {
+          synced = true;
         }
       } catch {}
+
+      if (!synced) {
+        try {
+          const { data: existingCls } = await supabase
+            .from('classrooms')
+            .select('id')
+            .eq('id', fam.id)
+            .maybeSingle();
+
+          if (!existingCls) {
+            const classroomPayload = {
+              id: fam.id,
+              teacher_id: fam.parent_id,
+              class_code: fam.family_code,
+              class_name: fam.family_name,
+              description: `[FAMILY_PORTAL] ${fam.description || ''}`,
+              created_at: fam.created_at,
+            };
+            const { error: clsErr } = await supabase.from('classrooms').insert(classroomPayload);
+            if (!clsErr) count++;
+          }
+        } catch {}
+      }
     }
 
     return { syncedCount: count };
@@ -1691,6 +1724,9 @@ export class TimeCraftRepository {
     // 1. Ambil dari Supabase jika aktif (sumber data utama)
     if (this.isUsingSupabase() && supabase) {
       try {
+        const resultFamilies: FamilyGroup[] = [];
+
+        // Coba dari family_groups
         const { data, error } = await supabase
           .from('family_groups')
           .select('*')
@@ -1698,7 +1734,36 @@ export class TimeCraftRepository {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          const validFamilies = (data as FamilyGroup[]).filter(isNotDeleted);
+          resultFamilies.push(...(data as FamilyGroup[]));
+        }
+
+        // Coba juga dari classrooms (ruang keluarga dengan label [FAMILY_PORTAL] atau kode FAM-)
+        const { data: clsData, error: clsErr } = await supabase
+          .from('classrooms')
+          .select('*')
+          .eq('teacher_id', parentId)
+          .order('created_at', { ascending: false });
+
+        if (!clsErr && clsData) {
+          for (const c of clsData) {
+            const isFamily =
+              (c.description && c.description.includes('[FAMILY_PORTAL]')) ||
+              (c.class_code && c.class_code.startsWith('FAM-'));
+            if (isFamily && !resultFamilies.some((f) => f.id === c.id || f.family_code === c.class_code)) {
+              resultFamilies.push({
+                id: c.id,
+                parent_id: c.teacher_id,
+                family_code: c.class_code,
+                family_name: c.class_name,
+                description: (c.description || '').replace(/^\[FAMILY_PORTAL\]\s*/, '').trim() || null,
+                created_at: c.created_at,
+              });
+            }
+          }
+        }
+
+        if (resultFamilies.length > 0) {
+          const validFamilies = resultFamilies.filter(isNotDeleted);
           const otherFamilies = (vault.family_groups || []).filter((f) => f.parent_id !== parentId);
           vault.family_groups = [...otherFamilies, ...validFamilies];
           writeLocalVault(vault, this.customStore);
@@ -1723,19 +1788,56 @@ export class TimeCraftRepository {
 
     if (this.isUsingSupabase() && supabase) {
       try {
+        const resultFamilies: Array<FamilyGroup & { memberId: string; joinedAt: string }> = [];
+
         const { data, error } = await supabase
           .from('family_members')
           .select('id, joined_at, family_groups (*)')
           .eq('child_id', childId);
 
         if (!error && data && data.length > 0) {
-          return (data as any[])
-            .filter((row) => row.family_groups && isNotDeleted(row.family_groups))
-            .map((row) => ({
-              ...(row.family_groups as FamilyGroup),
-              memberId: row.id,
-              joinedAt: row.joined_at,
-            }));
+          for (const row of data as any[]) {
+            if (row.family_groups && isNotDeleted(row.family_groups)) {
+              resultFamilies.push({
+                ...(row.family_groups as FamilyGroup),
+                memberId: row.id,
+                joinedAt: row.joined_at,
+              });
+            }
+          }
+        }
+
+        // Cek juga dari classroom_members
+        const { data: clsMembers, error: clsErr } = await supabase
+          .from('classroom_members')
+          .select('id, joined_at, classrooms (*)')
+          .eq('student_id', childId);
+
+        if (!clsErr && clsMembers && clsMembers.length > 0) {
+          for (const row of clsMembers as any[]) {
+            const c = row.classrooms;
+            if (c) {
+              const isFamily =
+                (c.description && c.description.includes('[FAMILY_PORTAL]')) ||
+                (c.class_code && c.class_code.startsWith('FAM-'));
+              if (isFamily && isNotDeleted(c) && !resultFamilies.some((f) => f.id === c.id || f.family_code === c.class_code)) {
+                resultFamilies.push({
+                  id: c.id,
+                  parent_id: c.teacher_id,
+                  family_code: c.class_code,
+                  family_name: c.class_name,
+                  description: (c.description || '').replace(/^\[FAMILY_PORTAL\]\s*/, '').trim() || null,
+                  created_at: c.created_at,
+                  memberId: row.id,
+                  joinedAt: row.joined_at,
+                });
+              }
+            }
+          }
+        }
+
+        if (resultFamilies.length > 0) {
+          return resultFamilies;
         }
       } catch {}
     }
@@ -1772,6 +1874,7 @@ export class TimeCraftRepository {
     }
 
     if (this.isUsingSupabase() && supabase) {
+      // 1. Coba cari di tabel family_groups
       try {
         const { data: fam, error: famErr } = await supabase
           .from('family_groups')
@@ -1779,14 +1882,7 @@ export class TimeCraftRepository {
           .ilike('family_code', cleanCode)
           .maybeSingle();
 
-        if (famErr) {
-          return {
-            ok: false,
-            message: `Ruang keluarga dengan kode "${cleanCode}" belum ditemukan. Pastikan kode yang dibagikan orang tua sudah benar.`,
-          };
-        }
-
-        if (fam) {
+        if (!famErr && fam) {
           const { error: joinErr } = await supabase.from('family_members').insert({
             id: generateId(),
             family_id: fam.id,
@@ -1796,21 +1892,92 @@ export class TimeCraftRepository {
             joined_at: new Date().toISOString(),
           });
 
-          if (joinErr) {
-            if (joinErr.message?.toLowerCase().includes('unique') || joinErr.code === '23505') {
-              return { ok: false, message: `Anda sudah terhubung dalam ruang keluarga "${fam.family_name}".` };
-            }
+          if (joinErr && !joinErr.message?.toLowerCase().includes('unique') && joinErr.code !== '23505') {
             return { ok: false, message: 'Gagal terhubung ke keluarga. Silakan coba sesaat lagi.' };
           }
+
+          const vault = readLocalVault(this.customStore);
+          if (!vault.family_groups) vault.family_groups = [];
+          if (!vault.family_groups.some((f) => f.id === fam.id)) {
+            vault.family_groups.push(fam as FamilyGroup);
+          }
+          if (!vault.family_members) vault.family_members = [];
+          if (!vault.family_members.some((m) => m.family_id === fam.id && m.child_id === params.childId)) {
+            vault.family_members.push({
+              id: generateId(),
+              family_id: fam.id,
+              child_id: params.childId,
+              child_name: params.childName,
+              child_email: params.childEmail,
+              joined_at: new Date().toISOString(),
+            });
+          }
+          writeLocalVault(vault, this.customStore);
 
           return { ok: true, message: `Berhasil terhubung ke ruang keluarga "${fam.family_name}"!`, family: fam as FamilyGroup };
         }
       } catch (err: any) {
-        console.warn('Kendala koneksi Supabase saat gabung keluarga:', err);
+        console.warn('Kendala pencarian di family_groups:', err);
+      }
+
+      // 2. Coba cari di tabel classrooms (kompatibilitas terverifikasi)
+      try {
+        const { data: cls, error: clsErr } = await supabase
+          .from('classrooms')
+          .select('*')
+          .ilike('class_code', cleanCode)
+          .maybeSingle();
+
+        if (!clsErr && cls) {
+          const cleanDesc = (cls.description || '').replace(/^\[FAMILY_PORTAL\]\s*/, '').trim();
+          const mappedFam: FamilyGroup = {
+            id: cls.id,
+            parent_id: cls.teacher_id,
+            family_code: cls.class_code,
+            family_name: cls.class_name,
+            description: cleanDesc || null,
+            created_at: cls.created_at,
+          };
+
+          const { error: joinErr } = await supabase.from('classroom_members').insert({
+            id: generateId(),
+            classroom_id: cls.id,
+            student_id: params.childId,
+            student_name: params.childName,
+            student_email: params.childEmail,
+            joined_at: new Date().toISOString(),
+          });
+
+          if (joinErr && !joinErr.message?.toLowerCase().includes('unique') && joinErr.code !== '23505') {
+            return { ok: false, message: 'Gagal terhubung ke ruang keluarga. Silakan coba sesaat lagi.' };
+          }
+
+          const vault = readLocalVault(this.customStore);
+          if (!vault.family_groups) vault.family_groups = [];
+          if (!vault.family_groups.some((f) => f.id === mappedFam.id)) {
+            vault.family_groups.push(mappedFam);
+          }
+          if (!vault.family_members) vault.family_members = [];
+          if (!vault.family_members.some((m) => m.family_id === mappedFam.id && m.child_id === params.childId)) {
+            vault.family_members.push({
+              id: generateId(),
+              family_id: mappedFam.id,
+              child_id: params.childId,
+              child_name: params.childName,
+              child_email: params.childEmail,
+              joined_at: new Date().toISOString(),
+            });
+          }
+          writeLocalVault(vault, this.customStore);
+
+          return { ok: true, message: `Berhasil terhubung ke ruang keluarga "${mappedFam.family_name}"!`, family: mappedFam };
+        }
+      } catch (err: any) {
+        console.warn('Kendala pencarian di classrooms:', err);
       }
     }
 
-    // Fallback pencarian di Local Vault
+    // 3. Fallback pencarian di Local Vault
     const vault = readLocalVault(this.customStore);
     const foundFam = (vault.family_groups || []).find(
       (f) => f.family_code.replace(/\s+/g, '').toUpperCase() === cleanCode,
@@ -1818,7 +1985,7 @@ export class TimeCraftRepository {
     if (!foundFam) {
       return {
         ok: false,
-        message: `Ruang keluarga dengan kode "${cleanCode}" tidak ditemukan. Pastikan kode dari orang tua sudah benar.`,
+        message: `Ruang keluarga dengan kode "${cleanCode}" belum ditemukan. Pastikan kode dari orang tua sudah benar.`,
       };
     }
 
@@ -1844,7 +2011,6 @@ export class TimeCraftRepository {
   }
 
   async leaveFamilyGroup(params: { familyId: string; childId: string }): Promise<{ ok: boolean; message: string }> {
-    // 1. Selalu bersihkan dari Local Vault terlebih dahulu
     const vault = readLocalVault(this.customStore);
     if (vault.family_members) {
       vault.family_members = vault.family_members.filter(
@@ -1853,7 +2019,6 @@ export class TimeCraftRepository {
       writeLocalVault(vault, this.customStore);
     }
 
-    // 2. Bersihkan dari Supabase jika aktif
     if (this.isUsingSupabase() && supabase) {
       try {
         await supabase
@@ -1861,6 +2026,12 @@ export class TimeCraftRepository {
           .delete()
           .eq('family_id', params.familyId)
           .eq('child_id', params.childId);
+
+        await supabase
+          .from('classroom_members')
+          .delete()
+          .eq('classroom_id', params.familyId)
+          .eq('student_id', params.childId);
       } catch (err) {
         console.warn('Gagal memutuskan hubungan keluarga di Supabase:', err);
       }
@@ -1874,7 +2045,6 @@ export class TimeCraftRepository {
     parentId: string;
     familyCode?: string;
   }): Promise<{ ok: boolean; message: string }> {
-    // 1. Simpan tombstone ke Local Vault
     const vault = readLocalVault(this.customStore);
     if (!vault.deleted_family_groups) vault.deleted_family_groups = [];
     if (!vault.deleted_family_groups.includes(params.familyId)) {
@@ -1884,19 +2054,16 @@ export class TimeCraftRepository {
       vault.deleted_family_groups.push(params.familyCode);
     }
 
-    // Bersihkan dari vault.family_groups
     if (vault.family_groups) {
       vault.family_groups = vault.family_groups.filter(
         (f) => f.id !== params.familyId && (!params.familyCode || f.family_code !== params.familyCode),
       );
     }
-    // Bersihkan dari vault.family_members
     if (vault.family_members) {
       vault.family_members = vault.family_members.filter((m) => m.family_id !== params.familyId);
     }
     writeLocalVault(vault, this.customStore);
 
-    // 2. Bersihkan dari Supabase jika aktif
     if (this.isUsingSupabase() && supabase) {
       try {
         await supabase
@@ -1914,6 +2081,24 @@ export class TimeCraftRepository {
             .from('family_groups')
             .delete()
             .eq('family_code', params.familyCode);
+        }
+
+        // Hapus juga dari classrooms jika disimpan di sana
+        await supabase
+          .from('classroom_members')
+          .delete()
+          .eq('classroom_id', params.familyId);
+
+        await supabase
+          .from('classrooms')
+          .delete()
+          .eq('id', params.familyId);
+
+        if (params.familyCode) {
+          await supabase
+            .from('classrooms')
+            .delete()
+            .eq('class_code', params.familyCode);
         }
       } catch (err) {
         console.warn('Gagal menghapus ruang keluarga di Supabase:', err);
@@ -1935,8 +2120,24 @@ export class TimeCraftRepository {
           .select('*')
           .eq('family_id', familyId);
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           members = data as FamilyMember[];
+        } else {
+          const { data: clsData, error: clsErr } = await supabase
+            .from('classroom_members')
+            .select('*')
+            .eq('classroom_id', familyId);
+
+          if (!clsErr && clsData) {
+            members = (clsData as any[]).map((m) => ({
+              id: m.id,
+              family_id: m.classroom_id,
+              child_id: m.student_id,
+              child_name: m.student_name,
+              child_email: m.student_email,
+              joined_at: m.joined_at,
+            }));
+          }
         }
       } catch {}
     }
