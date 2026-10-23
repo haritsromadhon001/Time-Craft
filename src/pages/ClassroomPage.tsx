@@ -289,13 +289,19 @@ export const ClassroomPage: React.FC = () => {
       onConfirm: async () => {
         if (!user) return;
         // Optimistic UI: langsung singkirkan kelas dari antarmuka seketika
-        setTeacherClasses((prev) => prev.filter((c) => c.id !== cls.id));
-        if (selectedClass?.id === cls.id) {
+        setTeacherClasses((prev) =>
+          prev.filter((c) => c.id !== cls.id && c.class_code !== cls.class_code)
+        );
+        if (selectedClass?.id === cls.id || selectedClass?.class_code === cls.class_code) {
           setSelectedClass(null);
         }
         setConfirmDialog((prev) => ({ ...prev, open: false }));
         try {
-          await repository.deleteClassroom({ classroomId: cls.id, teacherId: user.id });
+          await repository.deleteClassroom({
+            classroomId: cls.id,
+            teacherId: user.id,
+            classCode: cls.class_code,
+          });
           setFeedbackMsg({ type: 'success', text: `Kelas "${cls.class_name}" telah dihapus.` });
         } catch {
           setFeedbackMsg({ type: 'error', text: `Gagal menghapus kelas "${cls.class_name}".` });
@@ -313,7 +319,9 @@ export const ClassroomPage: React.FC = () => {
         'Anda akan keluar dari kelas ini. Guru tidak lagi dapat melihat rekap screen time dan sesi fokus Anda dari kelas ini.',
       onConfirm: async () => {
         if (!user) return;
-        setStudentClasses((prev) => prev.filter((c) => c.id !== cls.id));
+        setStudentClasses((prev) =>
+          prev.filter((c) => c.id !== cls.id && c.class_code !== cls.class_code)
+        );
         setConfirmDialog((prev) => ({ ...prev, open: false }));
         try {
           await repository.leaveClassroom({
@@ -338,13 +346,19 @@ export const ClassroomPage: React.FC = () => {
         'Seluruh anggota keluarga yang terhubung akan terlepas. Data aktivitas anak tidak akan hilang, namun ruang pemantauan ini akan dihapus permanen.',
       onConfirm: async () => {
         if (!user) return;
-        setParentFamilies((prev) => prev.filter((f) => f.id !== fam.id));
-        if (selectedFamily?.id === fam.id) {
+        setParentFamilies((prev) =>
+          prev.filter((f) => f.id !== fam.id && f.family_code !== fam.family_code)
+        );
+        if (selectedFamily?.id === fam.id || selectedFamily?.family_code === fam.family_code) {
           setSelectedFamily(null);
         }
         setConfirmDialog((prev) => ({ ...prev, open: false }));
         try {
-          await repository.deleteFamilyGroup({ familyId: fam.id, parentId: user.id });
+          await repository.deleteFamilyGroup({
+            familyId: fam.id,
+            parentId: user.id,
+            familyCode: fam.family_code,
+          });
           setFeedbackMsg({ type: 'success', text: `Ruang keluarga "${fam.family_name}" telah dihapus.` });
         } catch {
           setFeedbackMsg({ type: 'error', text: `Gagal menghapus ruang keluarga "${fam.family_name}".` });

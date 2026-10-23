@@ -52,6 +52,8 @@ interface LocalVaultStructure {
   classroom_members?: ClassroomMember[];
   family_groups?: FamilyGroup[];
   family_members?: FamilyMember[];
+  deleted_classrooms?: string[];
+  deleted_family_groups?: string[];
 }
 
 const VAULT_STORAGE_KEY = 'timecraft_isolated_vault_v1';
@@ -68,6 +70,8 @@ function createEmptyVault(): LocalVaultStructure {
     classroom_members: [],
     family_groups: [],
     family_members: [],
+    deleted_classrooms: [],
+    deleted_family_groups: [],
   };
 }
 
@@ -89,6 +93,8 @@ function readLocalVault(customStore?: Storage): LocalVaultStructure {
       classroom_members: Array.isArray(parsed.classroom_members) ? parsed.classroom_members : [],
       family_groups: Array.isArray(parsed.family_groups) ? parsed.family_groups : [],
       family_members: Array.isArray(parsed.family_members) ? parsed.family_members : [],
+      deleted_classrooms: Array.isArray(parsed.deleted_classrooms) ? parsed.deleted_classrooms : [],
+      deleted_family_groups: Array.isArray(parsed.deleted_family_groups) ? parsed.deleted_family_groups : [],
     };
   } catch {
     return createEmptyVault();
@@ -1177,7 +1183,10 @@ export class TimeCraftRepository {
     }
 
     const vault = readLocalVault(this.customStore);
-    const localClasses = (vault.classrooms || []).filter((c) => c.teacher_id === teacherId);
+    const tombstoneSet = new Set(vault.deleted_classrooms || []);
+    const localClasses = (vault.classrooms || []).filter(
+      (c) => c.teacher_id === teacherId && !tombstoneSet.has(c.id) && !tombstoneSet.has(c.class_code),
+    );
     if (localClasses.length === 0) return { syncedCount: 0 };
 
     let count = 0;
@@ -1202,6 +1211,11 @@ export class TimeCraftRepository {
   }
 
   async getClassroomsByTeacher(teacherId: string): Promise<Classroom[]> {
+    const vault = readLocalVault(this.customStore);
+    const tombstoneSet = new Set(vault.deleted_classrooms || []);
+    const isNotDeleted = (c: Classroom) =>
+      !tombstoneSet.has(c.id) && !tombstoneSet.has(c.class_code);
+
     // 1. Ambil dari Supabase jika aktif (sumber data utama)
     if (this.isUsingSupabase() && supabase) {
       try {
@@ -1212,13 +1226,14 @@ export class TimeCraftRepository {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
+          const validClasses = (data as Classroom[]).filter(isNotDeleted);
+
           // Sinkronkan Local Vault agar kelas yang dihapus tidak pernah muncul kembali
-          const vault = readLocalVault(this.customStore);
           const otherClasses = (vault.classrooms || []).filter((c) => c.teacher_id !== teacherId);
-          vault.classrooms = [...otherClasses, ...(data as Classroom[])];
+          vault.classrooms = [...otherClasses, ...validClasses];
           writeLocalVault(vault, this.customStore);
 
-          return data as Classroom[];
+          return validClasses;
         }
       } catch {
         // Fallback ke Local Vault
@@ -1226,13 +1241,17 @@ export class TimeCraftRepository {
     }
 
     // 2. Fallback: Ambil dari Local Vault
-    const vault = readLocalVault(this.customStore);
     return (vault.classrooms || [])
-      .filter((c) => c.teacher_id === teacherId)
+      .filter((c) => c.teacher_id === teacherId && isNotDeleted(c))
       .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   }
 
   async getClassroomsByStudent(studentId: string): Promise<Array<Classroom & { memberId: string; joinedAt: string }>> {
+    const vault = readLocalVault(this.customStore);
+    const tombstoneSet = new Set(vault.deleted_classrooms || []);
+    const isNotDeleted = (c: Classroom) =>
+      !tombstoneSet.has(c.id) && !tombstoneSet.has(c.class_code);
+
     if (this.isUsingSupabase() && supabase) {
       try {
         const { data, error } = await supabase
@@ -1242,7 +1261,7 @@ export class TimeCraftRepository {
 
         if (!error && data && data.length > 0) {
           return (data as any[])
-            .filter((row) => row.classrooms)
+            .filter((row) => row.classrooms && isNotDeleted(row.classrooms))
             .map((row) => ({
               ...(row.classrooms as Classroom),
               memberId: row.id,
@@ -1254,12 +1273,11 @@ export class TimeCraftRepository {
       }
     }
 
-    const vault = readLocalVault(this.customStore);
     const members = (vault.classroom_members || []).filter((m) => m.student_id === studentId);
     const result: Array<Classroom & { memberId: string; joinedAt: string }> = [];
 
     for (const mem of members) {
-      const cls = (vault.classrooms || []).find((c) => c.id === mem.classroom_id);
+      const cls = (vault.classrooms || []).find((c) => c.id === mem.classroom_id && isNotDeleted(c));
       if (cls) {
         result.push({
           ...cls,
@@ -1389,39 +1407,56 @@ export class TimeCraftRepository {
     return { ok: true, message: 'Berhasil keluar dari kelas.' };
   }
 
-  async deleteClassroom(params: { classroomId: string; teacherId: string }): Promise<{ ok: boolean; message: string }> {
-    // 1. Selalu bersihkan dari Local Vault terlebih dahulu agar tidak terbaca lagi secara lokal
+  async deleteClassroom(params: {
+    classroomId: string;
+    teacherId: string;
+    classCode?: string;
+  }): Promise<{ ok: boolean; message: string }> {
+    // 1. Simpan tombstone ke Local Vault agar kelas tidak pernah dihidupkan kembali
     const vault = readLocalVault(this.customStore);
-    if (vault.classrooms) {
-      vault.classrooms = vault.classrooms.filter((c) => c.id !== params.classroomId);
+    if (!vault.deleted_classrooms) vault.deleted_classrooms = [];
+    if (!vault.deleted_classrooms.includes(params.classroomId)) {
+      vault.deleted_classrooms.push(params.classroomId);
     }
+    if (params.classCode && !vault.deleted_classrooms.includes(params.classCode)) {
+      vault.deleted_classrooms.push(params.classCode);
+    }
+
+    // Bersihkan dari vault.classrooms
+    if (vault.classrooms) {
+      vault.classrooms = vault.classrooms.filter(
+        (c) => c.id !== params.classroomId && (!params.classCode || c.class_code !== params.classCode),
+      );
+    }
+    // Bersihkan dari vault.classroom_members
     if (vault.classroom_members) {
-      vault.classroom_members = vault.classroom_members.filter((m) => m.classroom_id !== params.classroomId);
+      vault.classroom_members = vault.classroom_members.filter(
+        (m) => m.classroom_id !== params.classroomId,
+      );
     }
     writeLocalVault(vault, this.customStore);
 
     // 2. Bersihkan dari Supabase jika aktif
     if (this.isUsingSupabase() && supabase) {
       try {
-        // Hapus relasi anggota terlebih dahulu agar tidak terkena foreign key constraint
+        // Hapus relasi anggota terlebih dahulu
         await supabase
           .from('classroom_members')
           .delete()
           .eq('classroom_id', params.classroomId);
 
-        // Hapus kelas berdasarkan id & teacher_id
-        const { error } = await supabase
+        // Hapus kelas berdasarkan ID
+        await supabase
           .from('classrooms')
           .delete()
-          .eq('id', params.classroomId)
-          .eq('teacher_id', params.teacherId);
+          .eq('id', params.classroomId);
 
-        if (error) {
-          // Fallback coba hapus hanya dengan id
+        // Hapus juga berdasarkan kode kelas jika ada
+        if (params.classCode) {
           await supabase
             .from('classrooms')
             .delete()
-            .eq('id', params.classroomId);
+            .eq('class_code', params.classCode);
         }
       } catch (err) {
         console.warn('Gagal menghapus kelas dari Supabase:', err);
@@ -1622,7 +1657,10 @@ export class TimeCraftRepository {
     }
 
     const vault = readLocalVault(this.customStore);
-    const localFamilies = (vault.family_groups || []).filter((f) => f.parent_id === parentId);
+    const tombstoneSet = new Set(vault.deleted_family_groups || []);
+    const localFamilies = (vault.family_groups || []).filter(
+      (f) => f.parent_id === parentId && !tombstoneSet.has(f.id) && !tombstoneSet.has(f.family_code),
+    );
     if (localFamilies.length === 0) return { syncedCount: 0 };
 
     let count = 0;
@@ -1645,6 +1683,11 @@ export class TimeCraftRepository {
   }
 
   async getFamilyGroupsByParent(parentId: string): Promise<FamilyGroup[]> {
+    const vault = readLocalVault(this.customStore);
+    const tombstoneSet = new Set(vault.deleted_family_groups || []);
+    const isNotDeleted = (f: FamilyGroup) =>
+      !tombstoneSet.has(f.id) && !tombstoneSet.has(f.family_code);
+
     // 1. Ambil dari Supabase jika aktif (sumber data utama)
     if (this.isUsingSupabase() && supabase) {
       try {
@@ -1655,11 +1698,11 @@ export class TimeCraftRepository {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          const vault = readLocalVault(this.customStore);
+          const validFamilies = (data as FamilyGroup[]).filter(isNotDeleted);
           const otherFamilies = (vault.family_groups || []).filter((f) => f.parent_id !== parentId);
-          vault.family_groups = [...otherFamilies, ...(data as FamilyGroup[])];
+          vault.family_groups = [...otherFamilies, ...validFamilies];
           writeLocalVault(vault, this.customStore);
-          return data as FamilyGroup[];
+          return validFamilies;
         }
       } catch {
         // Fallback ke Local Vault
@@ -1667,13 +1710,17 @@ export class TimeCraftRepository {
     }
 
     // 2. Fallback: Ambil dari Local Vault
-    const vault = readLocalVault(this.customStore);
     return (vault.family_groups || [])
-      .filter((f) => f.parent_id === parentId)
+      .filter((f) => f.parent_id === parentId && isNotDeleted(f))
       .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   }
 
   async getFamilyGroupsByChild(childId: string): Promise<Array<FamilyGroup & { memberId: string; joinedAt: string }>> {
+    const vault = readLocalVault(this.customStore);
+    const tombstoneSet = new Set(vault.deleted_family_groups || []);
+    const isNotDeleted = (f: FamilyGroup) =>
+      !tombstoneSet.has(f.id) && !tombstoneSet.has(f.family_code);
+
     if (this.isUsingSupabase() && supabase) {
       try {
         const { data, error } = await supabase
@@ -1683,7 +1730,7 @@ export class TimeCraftRepository {
 
         if (!error && data && data.length > 0) {
           return (data as any[])
-            .filter((row) => row.family_groups)
+            .filter((row) => row.family_groups && isNotDeleted(row.family_groups))
             .map((row) => ({
               ...(row.family_groups as FamilyGroup),
               memberId: row.id,
@@ -1693,12 +1740,11 @@ export class TimeCraftRepository {
       } catch {}
     }
 
-    const vault = readLocalVault(this.customStore);
     const members = (vault.family_members || []).filter((m) => m.child_id === childId);
     const result: Array<FamilyGroup & { memberId: string; joinedAt: string }> = [];
 
     for (const mem of members) {
-      const fam = (vault.family_groups || []).find((f) => f.id === mem.family_id);
+      const fam = (vault.family_groups || []).find((f) => f.id === mem.family_id && isNotDeleted(f));
       if (fam) {
         result.push({
           ...fam,
@@ -1823,12 +1869,28 @@ export class TimeCraftRepository {
     return { ok: true, message: 'Berhasil memutuskan hubungan dari ruang keluarga.' };
   }
 
-  async deleteFamilyGroup(params: { familyId: string; parentId: string }): Promise<{ ok: boolean; message: string }> {
-    // 1. Selalu bersihkan dari Local Vault terlebih dahulu
+  async deleteFamilyGroup(params: {
+    familyId: string;
+    parentId: string;
+    familyCode?: string;
+  }): Promise<{ ok: boolean; message: string }> {
+    // 1. Simpan tombstone ke Local Vault
     const vault = readLocalVault(this.customStore);
-    if (vault.family_groups) {
-      vault.family_groups = vault.family_groups.filter((f) => f.id !== params.familyId);
+    if (!vault.deleted_family_groups) vault.deleted_family_groups = [];
+    if (!vault.deleted_family_groups.includes(params.familyId)) {
+      vault.deleted_family_groups.push(params.familyId);
     }
+    if (params.familyCode && !vault.deleted_family_groups.includes(params.familyCode)) {
+      vault.deleted_family_groups.push(params.familyCode);
+    }
+
+    // Bersihkan dari vault.family_groups
+    if (vault.family_groups) {
+      vault.family_groups = vault.family_groups.filter(
+        (f) => f.id !== params.familyId && (!params.familyCode || f.family_code !== params.familyCode),
+      );
+    }
+    // Bersihkan dari vault.family_members
     if (vault.family_members) {
       vault.family_members = vault.family_members.filter((m) => m.family_id !== params.familyId);
     }
@@ -1842,17 +1904,16 @@ export class TimeCraftRepository {
           .delete()
           .eq('family_id', params.familyId);
 
-        const { error } = await supabase
+        await supabase
           .from('family_groups')
           .delete()
-          .eq('id', params.familyId)
-          .eq('parent_id', params.parentId);
+          .eq('id', params.familyId);
 
-        if (error) {
+        if (params.familyCode) {
           await supabase
             .from('family_groups')
             .delete()
-            .eq('id', params.familyId);
+            .eq('family_code', params.familyCode);
         }
       } catch (err) {
         console.warn('Gagal menghapus ruang keluarga di Supabase:', err);
