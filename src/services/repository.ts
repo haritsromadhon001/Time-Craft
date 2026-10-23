@@ -9,6 +9,9 @@ import {
   UserProfile,
   UserTarget,
   WeeklyReflection,
+  Classroom,
+  ClassroomMember,
+  StudentReportSummary,
 } from '../types/domain';
 import { getDetectedTimezone } from '../utils/time';
 import { validateScreenTimeInput } from '../utils/analytics';
@@ -23,7 +26,7 @@ import { validateScreenTimeInput } from '../utils/analytics';
 //    "Brankas Lokal Terisolasi per Akun" (Local Vault Mode) yang menerapkan
 //    aturan isolasi `user_id === activeUser.id` yang identik dengan RLS,
 //    sehingga seluruh fitur (Registrasi 2 akun berbeda, Login, Uji Isolasi,
-//    Screen Time, Focus Timer, Target, Ekspor) dapat diuji secara nyata!
+//    Screen Time, Focus Timer, Target, Ekspor, Kelas) dapat diuji secara nyata!
 // 3. TIDAK ADA DUMMY DATA ATAU SEED DATA. Akun baru selalu mulai dengan
 //    database yang 100% kosong.
 // ============================================================================
@@ -42,6 +45,8 @@ interface LocalVaultStructure {
   focus_sessions: FocusSession[];
   user_targets: UserTarget[];
   weekly_reflections: WeeklyReflection[];
+  classrooms?: Classroom[];
+  classroom_members?: ClassroomMember[];
 }
 
 const VAULT_STORAGE_KEY = 'timecraft_isolated_vault_v1';
@@ -54,6 +59,8 @@ function createEmptyVault(): LocalVaultStructure {
     focus_sessions: [],
     user_targets: [],
     weekly_reflections: [],
+    classrooms: [],
+    classroom_members: [],
   };
 }
 
@@ -71,6 +78,8 @@ function readLocalVault(customStore?: Storage): LocalVaultStructure {
       focus_sessions: Array.isArray(parsed.focus_sessions) ? parsed.focus_sessions : [],
       user_targets: Array.isArray(parsed.user_targets) ? parsed.user_targets : [],
       weekly_reflections: Array.isArray(parsed.weekly_reflections) ? parsed.weekly_reflections : [],
+      classrooms: Array.isArray(parsed.classrooms) ? parsed.classrooms : [],
+      classroom_members: Array.isArray(parsed.classroom_members) ? parsed.classroom_members : [],
     };
   } catch {
     return createEmptyVault();
@@ -1079,6 +1088,320 @@ export class TimeCraftRepository {
         message: 'Gagal memproses berkas cadangan. Pastikan format berkas adalah JSON yang valid.',
       };
     }
+  }
+
+  // ============================================================================
+  // SISTEM KELAS & PEMANTAUAN SISWA OLEH GURU (PORTAL KELAS)
+  // ============================================================================
+
+  async createClassroom(params: {
+    teacherId: string;
+    className: string;
+    description?: string;
+  }): Promise<{ classroom: Classroom | null; error?: string }> {
+    const cleanName = params.className.trim();
+    if (cleanName.length < 2) {
+      return { classroom: null, error: 'Nama kelas minimal harus 2 karakter.' };
+    }
+
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'TC-';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const newClassroom: Classroom = {
+      id: generateId(),
+      teacher_id: params.teacherId,
+      class_code: code,
+      class_name: cleanName,
+      description: params.description?.trim() || null,
+      created_at: new Date().toISOString(),
+    };
+
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('classrooms')
+          .insert(newClassroom)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          console.warn('Gagal simpan kelas ke Supabase, fallback ke Local Vault:', error.message);
+        } else if (data) {
+          return { classroom: data as Classroom };
+        }
+      } catch (err) {
+        console.warn('Koneksi kelas cloud bermasalah, fallback ke Local Vault:', err);
+      }
+    }
+
+    const vault = readLocalVault(this.customStore);
+    if (!vault.classrooms) vault.classrooms = [];
+    vault.classrooms.push(newClassroom);
+    writeLocalVault(vault, this.customStore);
+    return { classroom: newClassroom };
+  }
+
+  async getClassroomsByTeacher(teacherId: string): Promise<Classroom[]> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('classrooms')
+          .select('*')
+          .eq('teacher_id', teacherId)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          return data as Classroom[];
+        }
+      } catch {
+        // Fallback ke Local Vault
+      }
+    }
+
+    const vault = readLocalVault(this.customStore);
+    return (vault.classrooms || []).filter((c) => c.teacher_id === teacherId);
+  }
+
+  async getClassroomsByStudent(studentId: string): Promise<Array<Classroom & { memberId: string; joinedAt: string }>> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('classroom_members')
+          .select('id, joined_at, classrooms (*)')
+          .eq('student_id', studentId);
+
+        if (!error && data) {
+          return (data as any[]).map((row) => ({
+            ...(row.classrooms as Classroom),
+            memberId: row.id,
+            joinedAt: row.joined_at,
+          }));
+        }
+      } catch {
+        // Fallback ke Local Vault
+      }
+    }
+
+    const vault = readLocalVault(this.customStore);
+    const members = (vault.classroom_members || []).filter((m) => m.student_id === studentId);
+    const result: Array<Classroom & { memberId: string; joinedAt: string }> = [];
+
+    for (const mem of members) {
+      const cls = (vault.classrooms || []).find((c) => c.id === mem.classroom_id);
+      if (cls) {
+        result.push({
+          ...cls,
+          memberId: mem.id,
+          joinedAt: mem.joined_at,
+        });
+      }
+    }
+    return result;
+  }
+
+  async joinClassroomByCode(params: {
+    studentId: string;
+    classCode: string;
+    studentName: string;
+    studentEmail: string;
+  }): Promise<{ ok: boolean; message: string; classroom?: Classroom }> {
+    const cleanCode = params.classCode.trim().toUpperCase();
+    if (cleanCode.length < 4) {
+      return { ok: false, message: 'Format kode kelas tidak valid.' };
+    }
+
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data: cls, error: clsErr } = await supabase
+          .from('classrooms')
+          .select('*')
+          .ilike('class_code', cleanCode)
+          .maybeSingle();
+
+        if (clsErr || !cls) {
+          return { ok: false, message: `Kelas dengan kode "${cleanCode}" tidak ditemukan. Pastikan kode yang diberikan guru sudah benar.` };
+        }
+
+        const { error: joinErr } = await supabase.from('classroom_members').insert({
+          id: generateId(),
+          classroom_id: cls.id,
+          student_id: params.studentId,
+          student_name: params.studentName,
+          student_email: params.studentEmail,
+          joined_at: new Date().toISOString(),
+        });
+
+        if (joinErr) {
+          if (joinErr.message?.toLowerCase().includes('unique') || joinErr.code === '23505') {
+            return { ok: false, message: `Anda sudah bergabung dalam kelas "${cls.class_name}".` };
+          }
+          return { ok: false, message: 'Gagal bergabung ke kelas: ' + joinErr.message };
+        }
+
+        return { ok: true, message: `Berhasil bergabung ke kelas "${cls.class_name}"!`, classroom: cls as Classroom };
+      } catch {
+        // Fallback ke Local Vault
+      }
+    }
+
+    const vault = readLocalVault(this.customStore);
+    const foundCls = (vault.classrooms || []).find((c) => c.class_code.toUpperCase() === cleanCode);
+    if (!foundCls) {
+      return { ok: false, message: `Kelas dengan kode "${cleanCode}" tidak ditemukan. Pastikan kode dari guru sudah tepat.` };
+    }
+
+    if (!vault.classroom_members) vault.classroom_members = [];
+    const alreadyMember = vault.classroom_members.some(
+      (m) => m.classroom_id === foundCls.id && m.student_id === params.studentId,
+    );
+    if (alreadyMember) {
+      return { ok: false, message: `Anda sudah terdaftar dalam kelas "${foundCls.class_name}".` };
+    }
+
+    vault.classroom_members.push({
+      id: generateId(),
+      classroom_id: foundCls.id,
+      student_id: params.studentId,
+      student_name: params.studentName,
+      student_email: params.studentEmail,
+      joined_at: new Date().toISOString(),
+    });
+    writeLocalVault(vault, this.customStore);
+
+    return { ok: true, message: `Berhasil bergabung ke kelas "${foundCls.class_name}"!`, classroom: foundCls };
+  }
+
+  async leaveClassroom(params: { memberId?: string; classroomId: string; studentId: string }): Promise<{ ok: boolean; message: string }> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('classroom_members')
+          .delete()
+          .eq('classroom_id', params.classroomId)
+          .eq('student_id', params.studentId);
+
+        if (!error) return { ok: true, message: 'Berhasil keluar dari kelas.' };
+      } catch {}
+    }
+
+    const vault = readLocalVault(this.customStore);
+    if (vault.classroom_members) {
+      vault.classroom_members = vault.classroom_members.filter(
+        (m) => !(m.classroom_id === params.classroomId && m.student_id === params.studentId),
+      );
+      writeLocalVault(vault, this.customStore);
+    }
+    return { ok: true, message: 'Berhasil keluar dari kelas.' };
+  }
+
+  async deleteClassroom(params: { classroomId: string; teacherId: string }): Promise<{ ok: boolean; message: string }> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('classrooms')
+          .delete()
+          .eq('id', params.classroomId)
+          .eq('teacher_id', params.teacherId);
+
+        if (!error) return { ok: true, message: 'Kelas berhasil dihapus.' };
+      } catch {}
+    }
+
+    const vault = readLocalVault(this.customStore);
+    if (vault.classrooms) {
+      vault.classrooms = vault.classrooms.filter((c) => c.id !== params.classroomId);
+    }
+    if (vault.classroom_members) {
+      vault.classroom_members = vault.classroom_members.filter((m) => m.classroom_id !== params.classroomId);
+    }
+    writeLocalVault(vault, this.customStore);
+    return { ok: true, message: 'Kelas berhasil dihapus.' };
+  }
+
+  async getClassroomStudentsSummary(classroomId: string): Promise<StudentReportSummary[]> {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Ambil anggota kelas
+    let members: ClassroomMember[] = [];
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('classroom_members')
+          .select('*')
+          .eq('classroom_id', classroomId);
+
+        if (!error && data) {
+          members = data as ClassroomMember[];
+        }
+      } catch {}
+    }
+
+    if (members.length === 0) {
+      const vault = readLocalVault(this.customStore);
+      members = (vault.classroom_members || []).filter((m) => m.classroom_id === classroomId);
+    }
+
+    if (members.length === 0) return [];
+
+    const summaries: StudentReportSummary[] = [];
+
+    for (const mem of members) {
+      const studentLogs = await this.getScreenTimeLogs(mem.student_id);
+      const studentFocus = await this.getFocusSessions(mem.student_id);
+      const studentTarget = await this.getUserTarget(mem.student_id);
+
+      const logs = studentLogs.data || [];
+      const sessions = studentFocus.data || [];
+      const target = studentTarget.data || null;
+
+      // Hitung Screen Time Hari Ini
+      const todayLogs = logs.filter((l) => l.activity_date === todayStr);
+      const todayScreenTimeMinutes = todayLogs.length > 0
+        ? todayLogs.reduce((acc, l) => acc + (l.duration_minutes || 0), 0)
+        : null;
+
+      // Hitung Waktu Fokus Hari Ini
+      const todaySessions = sessions.filter((s) => s.session_date === todayStr);
+      const todayFocusMinutes = Math.round(
+        todaySessions.reduce((acc, s) => acc + (s.actual_focus_seconds || 0), 0) / 60,
+      );
+
+      // Hitung Rata-rata 7 Hari
+      const past7DaysDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      const past7Logs = logs.filter((l) => l.activity_date >= past7DaysDate);
+      const last7DaysAvgScreenTime = past7Logs.length > 0
+        ? Math.round(past7Logs.reduce((acc, l) => acc + (l.duration_minutes || 0), 0) / 7)
+        : 0;
+
+      const past7Sessions = sessions.filter((s) => s.session_date >= past7DaysDate);
+      const last7DaysAvgFocusTime = past7Sessions.length > 0
+        ? Math.round(past7Sessions.reduce((acc, s) => acc + (s.actual_focus_seconds || 0), 0) / (7 * 60))
+        : 0;
+
+      const maxLimit = target?.max_daily_screentime_minutes || null;
+      const isExceeding = maxLimit !== null && todayScreenTimeMinutes !== null && todayScreenTimeMinutes > maxLimit;
+
+      summaries.push({
+        studentId: mem.student_id,
+        displayName: mem.student_name || 'Siswa',
+        email: mem.student_email,
+        avatarUrl: null,
+        todayScreenTimeMinutes,
+        todayFocusMinutes,
+        last7DaysAvgScreenTime,
+        last7DaysAvgFocusTime,
+        maxDailyScreenTimeLimit: maxLimit,
+        isExceedingLimit: isExceeding,
+        recentLogs: logs.slice(0, 5),
+        recentFocusSessions: sessions.slice(0, 5),
+        joinedAt: mem.joined_at,
+      });
+    }
+
+    return summaries.sort((a, b) => (b.todayScreenTimeMinutes ?? 0) - (a.todayScreenTimeMinutes ?? 0));
   }
 }
 

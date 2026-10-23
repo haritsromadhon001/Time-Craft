@@ -14,6 +14,7 @@ import {
   X,
   Sun,
   Moon,
+  GraduationCap,
 } from 'lucide-react';
 import { getSupabaseConfigStatus } from '../../services/supabase';
 import { useApp } from '../../context/AppContext';
@@ -55,6 +56,7 @@ export const AppLayout: React.FC = () => {
     { to: '/focus-timer', label: 'Focus Timer', icon: Timer },
     { to: '/targets', label: 'Target & Refleksi', icon: Target },
     { to: '/analytics', label: 'Analitik', icon: BarChart3 },
+    { to: '/classroom', label: 'Kelas & Pantau', icon: GraduationCap },
     { to: '/settings', label: 'Pengaturan', icon: Settings },
   ];
 

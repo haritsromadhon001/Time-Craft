@@ -158,3 +158,42 @@ export interface NewWeeklyReflectionInput {
   wins_note: string;
   improvement_plan?: string;
 }
+
+// ============================================================================
+// TIMECRAFT — SISTEM KELAS & PEMANTAUAN SISWA OLEH GURU (CLASSROOM SYSTEM)
+// ============================================================================
+
+export interface Classroom {
+  id: string;
+  teacher_id: string;
+  class_code: string; // Kode unik 6-8 karakter uppercase (contoh: TC-7B9A)
+  class_name: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface ClassroomMember {
+  id: string;
+  classroom_id: string;
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  joined_at: string;
+}
+
+export interface StudentReportSummary {
+  studentId: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+  todayScreenTimeMinutes: number | null;
+  todayFocusMinutes: number;
+  last7DaysAvgScreenTime: number;
+  last7DaysAvgFocusTime: number;
+  maxDailyScreenTimeLimit: number | null;
+  isExceedingLimit: boolean;
+  recentLogs: ScreenTimeLog[];
+  recentFocusSessions: FocusSession[];
+  joinedAt: string;
+}
+

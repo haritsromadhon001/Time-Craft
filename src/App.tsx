@@ -10,6 +10,7 @@ import { TargetsPage } from './pages/TargetsPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ReportPage } from './pages/ReportPage';
+import { ClassroomPage } from './pages/ClassroomPage';
 
 const AppRoutes: React.FC = () => {
   const { user, loadingAuth, theme } = useApp();
@@ -77,6 +78,7 @@ const AppRoutes: React.FC = () => {
         <Route path="focus-timer" element={<FocusTimerPage />} />
         <Route path="targets" element={<TargetsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="classroom" element={<ClassroomPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
