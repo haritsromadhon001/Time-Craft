@@ -19,7 +19,7 @@ import { openPdfReportWindow } from '../utils/pdfExport';
 import { LiveClock } from '../components/ui/LiveClock';
 
 export const DashboardPage: React.FC = () => {
-  const { user, logs, focusSessions, target, loadingData, dataError } = useApp();
+  const { user, logs, focusSessions, target, loadingData, dataError, theme } = useApp();
   const timezone = user?.timezone || 'Asia/Jakarta';
 
   const summary = useMemo(
@@ -335,23 +335,16 @@ export const DashboardPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             {/* Target 1: Batas Screen Time */}
             <div className="card-elevated">
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.45rem',
-                }}
-              >
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              <div className="target-card-row">
+                <span className="target-card-label">
                   Batas Maksimal Screen Time
                 </span>
-                <span className="mono" style={{ color: 'var(--text-secondary)' }}>
+                <span className="target-card-badge">
                   {summary.screenTimeTargetMinutes === null
                     ? 'Target belum diatur'
                     : `${summary.todayTotalMinutes ?? 0} / ${
                         summary.screenTimeTargetMinutes
-                      } menit (${summary.screenTimeTargetPercentage ?? 0}%)`}
+                      }m (${summary.screenTimeTargetPercentage ?? 0}%)`}
                 </span>
               </div>
               {summary.screenTimeTargetMinutes !== null ? (
@@ -370,7 +363,7 @@ export const DashboardPage: React.FC = () => {
                   />
                 </div>
               ) : (
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.35rem 0 0' }}>
                   Anda belum menetapkan batas harian.{' '}
                   <Link
                     to="/targets"
@@ -384,23 +377,16 @@ export const DashboardPage: React.FC = () => {
 
             {/* Target 2: Minimal Durasi Fokus */}
             <div className="card-elevated">
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.45rem',
-                }}
-              >
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              <div className="target-card-row">
+                <span className="target-card-label">
                   Target Minimal Waktu Fokus
                 </span>
-                <span className="mono" style={{ color: 'var(--text-secondary)' }}>
+                <span className="target-card-badge">
                   {summary.focusTargetMinutes === null
                     ? 'Target belum diatur'
                     : `${summary.todayFocusMinutes ?? 0} / ${
                         summary.focusTargetMinutes
-                      } menit (${summary.focusTargetPercentage ?? 0}%)`}
+                      }m (${summary.focusTargetPercentage ?? 0}%)`}
                 </span>
               </div>
               {summary.focusTargetMinutes !== null ? (
@@ -413,7 +399,7 @@ export const DashboardPage: React.FC = () => {
                   />
                 </div>
               ) : (
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.35rem 0 0' }}>
                   Anda belum menetapkan target fokus harian.{' '}
                   <Link
                     to="/targets"
@@ -445,13 +431,15 @@ export const DashboardPage: React.FC = () => {
         </section>
 
         {/* Panel Grafik Penggunaan 7 Hari Terakhir */}
-        {/* Panel Grafik Penggunaan 7 Hari Terakhir */}
         <section className="card chart-card">
           <div className="card-header">
             <div>
               <h2 className="card-title">Grafik Screen Time 7 Hari Terakhir</h2>
               <p className="card-description">
-                Satuan: Menit per hari • Timer Sistem (Merah Utama) vs Input Manual (Merah Muda)
+                Satuan: Menit per hari •{' '}
+                {theme === 'light'
+                  ? 'Timer Sistem (Biru Utama) vs Input Manual (Biru Muda)'
+                  : 'Timer Sistem (Merah Utama) vs Input Manual (Merah Muda)'}
               </p>
             </div>
           </div>
