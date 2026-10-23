@@ -18,6 +18,18 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('timecraft_theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+          var icon = document.querySelector("link[rel*='icon']");
+          if (icon) {
+            icon.href = t === 'light' ? '/logo-blue.svg' : '/logo-red.svg';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root">

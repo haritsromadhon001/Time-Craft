@@ -35,10 +35,12 @@ export const DashboardPage: React.FC = () => {
 
   if (loadingData) {
     return (
-      <section className="card" aria-busy="true">
-        <h1 className="card-title">Memuat Data Dashboard...</h1>
-        <p className="card-description">
-          Sedang mengambil catatan aktivitas asli milik akun Anda.
+      <section className="card" aria-busy="true" style={{ padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+        <h1 className="card-title" style={{ fontSize: '1.15rem', marginBottom: '0.35rem' }}>
+          Please wait...
+        </h1>
+        <p className="card-description" style={{ margin: 0 }}>
+          Sedang menyiapkan catatan aktivitas akun Anda.
         </p>
       </section>
     );

@@ -12,7 +12,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { ReportPage } from './pages/ReportPage';
 
 const AppRoutes: React.FC = () => {
-  const { user, loadingAuth } = useApp();
+  const { user, loadingAuth, theme } = useApp();
 
   if (loadingAuth) {
     return (
@@ -20,13 +20,46 @@ const AppRoutes: React.FC = () => {
         style={{
           minHeight: '100vh',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: 'var(--bg-primary)',
-          color: 'var(--text-secondary)',
+          color: 'var(--text-primary)',
+          gap: '1rem',
+          padding: '1.5rem',
         }}
       >
-        Memeriksa sesi autentikasi TimeCraft...
+        <img
+          src={theme === 'light' ? '/logo-blue.svg' : '/logo-red.svg'}
+          alt="TimeCraft"
+          width={52}
+          height={52}
+          style={{
+            borderRadius: '12px',
+            animation: 'clockPulse 2s infinite ease-in-out',
+          }}
+        />
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.01em',
+              marginBottom: '0.25rem',
+            }}
+          >
+            Please wait...
+          </div>
+          <div
+            style={{
+              fontSize: '0.82rem',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            Memuat aplikasi TimeCraft
+          </div>
+        </div>
       </div>
     );
   }

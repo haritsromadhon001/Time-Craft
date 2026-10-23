@@ -480,9 +480,19 @@ code {
   gap: 0.35rem;
   padding: 0.5rem 0.65rem;
   border-radius: var(--radius-md);
-  background-color: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+:root .live-clock-sidebar-card,
+[data-theme="dark"] .live-clock-sidebar-card {
+  background-color: #121722;
+  border-color: #242d3d;
+}
+
+[data-theme="light"] .live-clock-sidebar-card {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
 }
 
 .live-clock-sidebar-card:hover {
@@ -517,13 +527,23 @@ code {
 .live-clock-sidebar-badge {
   font-size: 0.67rem;
   font-weight: 750;
-  color: var(--primary-blue);
-  background-color: #ffffff;
-  border: 1px solid var(--border-blue-subtle);
   padding: 0.08rem 0.32rem;
   border-radius: 4px;
   letter-spacing: 0.02em;
   flex-shrink: 0;
+}
+
+:root .live-clock-sidebar-badge,
+[data-theme="dark"] .live-clock-sidebar-badge {
+  background-color: #261215;
+  border: 1px solid #4a1d24;
+  color: #ef4444;
+}
+
+[data-theme="light"] .live-clock-sidebar-badge {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
 }
 
 .live-clock-sidebar-time-row {
@@ -1992,18 +2012,30 @@ code {
 
 /* ============================================================================
  * JAM KLIEN REAL-TIME (LIVE CLIENT CLOCK WIDGET)
- * ============================================================================ */
-
-.live-clock-widget {
+ * ============================================================================ .live-clock-widget {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: linear-gradient(135deg, #141926 0%, #0d1119 100%);
-  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 0.65rem 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   min-width: 220px;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-fast);
+}
+
+:root .live-clock-widget,
+[data-theme="dark"] .live-clock-widget {
+  background: linear-gradient(135deg, #121722 0%, #0d1117 100%);
+  border-color: #242d3d;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .live-clock-widget {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
 
 .live-clock-main {
@@ -2017,13 +2049,24 @@ code {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background-color: var(--surface-blue-light);
-  border: 1px solid var(--border-blue-subtle);
-  color: var(--primary-blue);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+:root .live-clock-icon-wrap,
+[data-theme="dark"] .live-clock-icon-wrap {
+  background-color: #261215;
+  border: 1px solid #4a1d24;
+  color: #ef4444;
+}
+
+[data-theme="light"] .live-clock-icon-wrap {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
 }
 
 .live-clock-pulse-dot {
@@ -2034,8 +2077,16 @@ code {
   height: 8px;
   border-radius: 999px;
   background-color: #16a34a;
-  border: 2px solid #090b10;
   animation: clockPulse 2s infinite ease-in-out;
+}
+
+:root .live-clock-pulse-dot,
+[data-theme="dark"] .live-clock-pulse-dot {
+  border: 2px solid #121722;
+}
+
+[data-theme="light"] .live-clock-pulse-dot {
+  border: 2px solid #ffffff;
 }
 
 @keyframes clockPulse {
@@ -2064,21 +2115,39 @@ code {
   font-family: var(--font-mono);
   font-size: 1.32rem;
   font-weight: 800;
-  color: var(--text-primary);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
+:root .live-clock-digits,
+[data-theme="dark"] .live-clock-digits {
+  color: #ffffff;
+}
+
+[data-theme="light"] .live-clock-digits {
+  color: #0f172a;
+}
+
 .live-clock-tz-tag {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--primary-blue);
-  background-color: var(--surface-blue-light);
-  border: 1px solid var(--border-blue-subtle);
   padding: 0.12rem 0.38rem;
   border-radius: 4px;
   letter-spacing: 0.04em;
+}
+
+:root .live-clock-tz-tag,
+[data-theme="dark"] .live-clock-tz-tag {
+  color: #ef4444;
+  background-color: #261215;
+  border: 1px solid #4a1d24;
+}
+
+[data-theme="light"] .live-clock-tz-tag {
+  color: #2563eb;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
 }
 
 .live-clock-meta {
@@ -2087,12 +2156,19 @@ code {
   gap: 0.35rem;
   margin-top: 0.25rem;
   font-size: 0.74rem;
-  color: var(--text-secondary);
 }
 
 .live-clock-date {
   font-weight: 600;
+}
+
+:root .live-clock-date,
+[data-theme="dark"] .live-clock-date {
   color: #cbd5e1;
+}
+
+[data-theme="light"] .live-clock-date {
+  color: #475569;
 }
 
 .live-clock-status-text {
@@ -2110,9 +2186,22 @@ code {
   gap: 0.2rem;
   padding: 0.45rem 0.2rem;
   border-radius: var(--radius-md);
-  background-color: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   width: 100%;
+}
+
+:root .live-clock-compact,
+[data-theme="dark"] .live-clock-compact {
+  background-color: #121722;
+  border-color: #242d3d;
+}
+
+[data-theme="light"] .live-clock-compact {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+.live-clock-compact {
   max-width: 52px;
   margin: 0 auto;
   box-sizing: border-box;
