@@ -56,7 +56,7 @@ export const AppLayout: React.FC = () => {
     { to: '/focus-timer', label: 'Focus Timer', icon: Timer },
     { to: '/targets', label: 'Target & Refleksi', icon: Target },
     { to: '/analytics', label: 'Analitik', icon: BarChart3 },
-    { to: '/classroom', label: 'Kelas & Pantau', icon: GraduationCap },
+    { to: '/classroom', label: 'Pantau & Bimbingan', icon: GraduationCap },
     { to: '/settings', label: 'Pengaturan', icon: Settings },
   ];
 

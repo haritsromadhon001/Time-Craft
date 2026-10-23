@@ -197,3 +197,41 @@ export interface StudentReportSummary {
   joinedAt: string;
 }
 
+// ============================================================================
+// TIMECRAFT — SISTEM KELUARGA & PEMANTAUAN ANAK OLEH ORANG TUA (FAMILY SYSTEM)
+// ============================================================================
+
+export interface FamilyGroup {
+  id: string;
+  parent_id: string;
+  family_code: string; // Kode unik keluarga (contoh: FAM-8X2K)
+  family_name: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface FamilyMember {
+  id: string;
+  family_id: string;
+  child_id: string;
+  child_name: string;
+  child_email: string;
+  joined_at: string;
+}
+
+export interface ChildReportSummary {
+  childId: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+  todayScreenTimeMinutes: number | null;
+  todayFocusMinutes: number;
+  last7DaysAvgScreenTime: number;
+  last7DaysAvgFocusTime: number;
+  maxDailyScreenTimeLimit: number | null;
+  isExceedingLimit: boolean;
+  recentLogs: ScreenTimeLog[];
+  recentFocusSessions: FocusSession[];
+  joinedAt: string;
+}
+

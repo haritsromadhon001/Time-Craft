@@ -12,6 +12,9 @@ import {
   Classroom,
   ClassroomMember,
   StudentReportSummary,
+  FamilyGroup,
+  FamilyMember,
+  ChildReportSummary,
 } from '../types/domain';
 import { getDetectedTimezone } from '../utils/time';
 import { validateScreenTimeInput } from '../utils/analytics';
@@ -26,7 +29,7 @@ import { validateScreenTimeInput } from '../utils/analytics';
 //    "Brankas Lokal Terisolasi per Akun" (Local Vault Mode) yang menerapkan
 //    aturan isolasi `user_id === activeUser.id` yang identik dengan RLS,
 //    sehingga seluruh fitur (Registrasi 2 akun berbeda, Login, Uji Isolasi,
-//    Screen Time, Focus Timer, Target, Ekspor, Kelas) dapat diuji secara nyata!
+//    Screen Time, Focus Timer, Target, Ekspor, Kelas, Keluarga) dapat diuji secara nyata!
 // 3. TIDAK ADA DUMMY DATA ATAU SEED DATA. Akun baru selalu mulai dengan
 //    database yang 100% kosong.
 // ============================================================================
@@ -47,6 +50,8 @@ interface LocalVaultStructure {
   weekly_reflections: WeeklyReflection[];
   classrooms?: Classroom[];
   classroom_members?: ClassroomMember[];
+  family_groups?: FamilyGroup[];
+  family_members?: FamilyMember[];
 }
 
 const VAULT_STORAGE_KEY = 'timecraft_isolated_vault_v1';
@@ -61,6 +66,8 @@ function createEmptyVault(): LocalVaultStructure {
     weekly_reflections: [],
     classrooms: [],
     classroom_members: [],
+    family_groups: [],
+    family_members: [],
   };
 }
 
@@ -80,6 +87,8 @@ function readLocalVault(customStore?: Storage): LocalVaultStructure {
       weekly_reflections: Array.isArray(parsed.weekly_reflections) ? parsed.weekly_reflections : [],
       classrooms: Array.isArray(parsed.classrooms) ? parsed.classrooms : [],
       classroom_members: Array.isArray(parsed.classroom_members) ? parsed.classroom_members : [],
+      family_groups: Array.isArray(parsed.family_groups) ? parsed.family_groups : [],
+      family_members: Array.isArray(parsed.family_members) ? parsed.family_members : [],
     };
   } catch {
     return createEmptyVault();
@@ -1507,6 +1516,419 @@ export class TimeCraftRepository {
         studentId: mem.student_id,
         displayName: mem.student_name || 'Siswa',
         email: mem.student_email,
+        avatarUrl: null,
+        todayScreenTimeMinutes,
+        todayFocusMinutes,
+        last7DaysAvgScreenTime,
+        last7DaysAvgFocusTime,
+        maxDailyScreenTimeLimit: maxLimit,
+        isExceedingLimit: isExceeding,
+        recentLogs: logs.slice(0, 5),
+        recentFocusSessions: sessions.slice(0, 5),
+        joinedAt: mem.joined_at,
+      });
+    }
+
+    return summaries.sort((a, b) => (b.todayScreenTimeMinutes ?? 0) - (a.todayScreenTimeMinutes ?? 0));
+  }
+
+  // ============================================================================
+  // SISTEM KELUARGA & PEMANTAUAN ANAK OLEH ORANG TUA (PORTAL KELUARGA)
+  // ============================================================================
+
+  async createFamilyGroup(params: {
+    parentId: string;
+    familyName: string;
+    description?: string;
+  }): Promise<{ family: FamilyGroup | null; error?: string }> {
+    const cleanName = params.familyName.trim();
+    if (cleanName.length < 2) {
+      return { family: null, error: 'Nama ruang keluarga minimal harus 2 karakter.' };
+    }
+
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'FAM-';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const newFamily: FamilyGroup = {
+      id: generateId(),
+      parent_id: params.parentId,
+      family_code: code,
+      family_name: cleanName,
+      description: params.description?.trim() || null,
+      created_at: new Date().toISOString(),
+    };
+
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('family_groups')
+          .insert(newFamily)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          console.warn('Gagal simpan keluarga ke Supabase, simpan ke cadangan lokal:', error.message);
+          const vault = readLocalVault(this.customStore);
+          if (!vault.family_groups) vault.family_groups = [];
+          vault.family_groups.push(newFamily);
+          writeLocalVault(vault, this.customStore);
+          return { family: newFamily };
+        } else if (data) {
+          const vault = readLocalVault(this.customStore);
+          if (!vault.family_groups) vault.family_groups = [];
+          if (!vault.family_groups.some((f) => f.id === data.id)) {
+            vault.family_groups.push(data as FamilyGroup);
+            writeLocalVault(vault, this.customStore);
+          }
+          return { family: data as FamilyGroup };
+        }
+      } catch (err: any) {
+        console.warn('Koneksi keluarga cloud bermasalah:', err);
+      }
+    }
+
+    const vault = readLocalVault(this.customStore);
+    if (!vault.family_groups) vault.family_groups = [];
+    vault.family_groups.push(newFamily);
+    writeLocalVault(vault, this.customStore);
+    return { family: newFamily };
+  }
+
+  async syncLocalFamiliesToSupabase(parentId: string): Promise<{ syncedCount: number }> {
+    if (!this.isUsingSupabase() || !supabase) {
+      return { syncedCount: 0 };
+    }
+
+    const vault = readLocalVault(this.customStore);
+    const localFamilies = (vault.family_groups || []).filter((f) => f.parent_id === parentId);
+    if (localFamilies.length === 0) return { syncedCount: 0 };
+
+    let count = 0;
+    for (const fam of localFamilies) {
+      try {
+        const { data: existing } = await supabase
+          .from('family_groups')
+          .select('id')
+          .eq('id', fam.id)
+          .maybeSingle();
+
+        if (!existing) {
+          const { error } = await supabase.from('family_groups').insert(fam);
+          if (!error) count++;
+        }
+      } catch {}
+    }
+
+    return { syncedCount: count };
+  }
+
+  async getFamilyGroupsByParent(parentId: string): Promise<FamilyGroup[]> {
+    const listMap = new Map<string, FamilyGroup>();
+
+    // 1. Ambil dari Local Vault
+    const vault = readLocalVault(this.customStore);
+    const localList = (vault.family_groups || []).filter((f) => f.parent_id === parentId);
+    for (const f of localList) {
+      listMap.set(f.id, f);
+    }
+
+    // 2. Ambil dari Supabase jika aktif
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('family_groups')
+          .select('*')
+          .eq('parent_id', parentId)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          for (const f of data as FamilyGroup[]) {
+            listMap.set(f.id, f);
+          }
+          this.syncLocalFamiliesToSupabase(parentId).catch(() => {});
+        }
+      } catch {}
+    }
+
+    return Array.from(listMap.values()).sort(
+      (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
+    );
+  }
+
+  async getFamilyGroupsByChild(childId: string): Promise<Array<FamilyGroup & { memberId: string; joinedAt: string }>> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('family_members')
+          .select('id, joined_at, family_groups (*)')
+          .eq('child_id', childId);
+
+        if (!error && data && data.length > 0) {
+          return (data as any[])
+            .filter((row) => row.family_groups)
+            .map((row) => ({
+              ...(row.family_groups as FamilyGroup),
+              memberId: row.id,
+              joinedAt: row.joined_at,
+            }));
+        }
+      } catch {}
+    }
+
+    const vault = readLocalVault(this.customStore);
+    const members = (vault.family_members || []).filter((m) => m.child_id === childId);
+    const result: Array<FamilyGroup & { memberId: string; joinedAt: string }> = [];
+
+    for (const mem of members) {
+      const fam = (vault.family_groups || []).find((f) => f.id === mem.family_id);
+      if (fam) {
+        result.push({
+          ...fam,
+          memberId: mem.id,
+          joinedAt: mem.joined_at,
+        });
+      }
+    }
+    return result;
+  }
+
+  async joinFamilyByCode(params: {
+    childId: string;
+    familyCode: string;
+    childName: string;
+    childEmail: string;
+  }): Promise<{ ok: boolean; message: string; family?: FamilyGroup }> {
+    let cleanCode = params.familyCode.replace(/\s+/g, '').toUpperCase();
+    if (!cleanCode.startsWith('FAM-') && cleanCode.length === 4) {
+      cleanCode = 'FAM-' + cleanCode;
+    }
+
+    if (cleanCode.length < 4) {
+      return { ok: false, message: 'Format kode keluarga tidak valid. Contoh format: FAM-8X2K atau 8X2K' };
+    }
+
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data: fam, error: famErr } = await supabase
+          .from('family_groups')
+          .select('*')
+          .ilike('family_code', cleanCode)
+          .maybeSingle();
+
+        if (famErr) {
+          return {
+            ok: false,
+            message: `Ruang keluarga dengan kode "${cleanCode}" belum ditemukan. Pastikan kode yang dibagikan orang tua sudah benar.`,
+          };
+        }
+
+        if (fam) {
+          const { error: joinErr } = await supabase.from('family_members').insert({
+            id: generateId(),
+            family_id: fam.id,
+            child_id: params.childId,
+            child_name: params.childName,
+            child_email: params.childEmail,
+            joined_at: new Date().toISOString(),
+          });
+
+          if (joinErr) {
+            if (joinErr.message?.toLowerCase().includes('unique') || joinErr.code === '23505') {
+              return { ok: false, message: `Anda sudah terhubung dalam ruang keluarga "${fam.family_name}".` };
+            }
+            return { ok: false, message: 'Gagal terhubung ke keluarga. Silakan coba sesaat lagi.' };
+          }
+
+          return { ok: true, message: `Berhasil terhubung ke ruang keluarga "${fam.family_name}"!`, family: fam as FamilyGroup };
+        }
+      } catch (err: any) {
+        console.warn('Kendala koneksi Supabase saat gabung keluarga:', err);
+      }
+    }
+
+    // Fallback pencarian di Local Vault
+    const vault = readLocalVault(this.customStore);
+    const foundFam = (vault.family_groups || []).find(
+      (f) => f.family_code.replace(/\s+/g, '').toUpperCase() === cleanCode,
+    );
+    if (!foundFam) {
+      return {
+        ok: false,
+        message: `Ruang keluarga dengan kode "${cleanCode}" tidak ditemukan. Pastikan kode dari orang tua sudah benar.`,
+      };
+    }
+
+    if (!vault.family_members) vault.family_members = [];
+    const alreadyMember = vault.family_members.some(
+      (m) => m.family_id === foundFam.id && m.child_id === params.childId,
+    );
+    if (alreadyMember) {
+      return { ok: false, message: `Anda sudah terhubung dalam ruang keluarga "${foundFam.family_name}".` };
+    }
+
+    vault.family_members.push({
+      id: generateId(),
+      family_id: foundFam.id,
+      child_id: params.childId,
+      child_name: params.childName,
+      child_email: params.childEmail,
+      joined_at: new Date().toISOString(),
+    });
+    writeLocalVault(vault, this.customStore);
+
+    return { ok: true, message: `Berhasil terhubung ke ruang keluarga "${foundFam.family_name}"!`, family: foundFam };
+  }
+
+  async leaveFamilyGroup(params: { familyId: string; childId: string }): Promise<{ ok: boolean; message: string }> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('family_members')
+          .delete()
+          .eq('family_id', params.familyId)
+          .eq('child_id', params.childId);
+
+        if (!error) return { ok: true, message: 'Berhasil memutuskan hubungan dari ruang keluarga.' };
+      } catch {}
+    }
+
+    const vault = readLocalVault(this.customStore);
+    if (vault.family_members) {
+      vault.family_members = vault.family_members.filter(
+        (m) => !(m.family_id === params.familyId && m.child_id === params.childId),
+      );
+      writeLocalVault(vault, this.customStore);
+    }
+    return { ok: true, message: 'Berhasil memutuskan hubungan dari ruang keluarga.' };
+  }
+
+  async deleteFamilyGroup(params: { familyId: string; parentId: string }): Promise<{ ok: boolean; message: string }> {
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('family_groups')
+          .delete()
+          .eq('id', params.familyId)
+          .eq('parent_id', params.parentId);
+
+        if (!error) return { ok: true, message: 'Ruang keluarga berhasil dihapus.' };
+      } catch {}
+    }
+
+    const vault = readLocalVault(this.customStore);
+    if (vault.family_groups) {
+      vault.family_groups = vault.family_groups.filter((f) => f.id !== params.familyId);
+    }
+    if (vault.family_members) {
+      vault.family_members = vault.family_members.filter((m) => m.family_id !== params.familyId);
+    }
+    writeLocalVault(vault, this.customStore);
+    return { ok: true, message: 'Ruang keluarga berhasil dihapus.' };
+  }
+
+  async getFamilyChildrenSummary(familyId: string): Promise<ChildReportSummary[]> {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Ambil anggota anak di ruang keluarga
+    let members: FamilyMember[] = [];
+    if (this.isUsingSupabase() && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('family_members')
+          .select('*')
+          .eq('family_id', familyId);
+
+        if (!error && data) {
+          members = data as FamilyMember[];
+        }
+      } catch {}
+    }
+
+    if (members.length === 0) {
+      const vault = readLocalVault(this.customStore);
+      members = (vault.family_members || []).filter((m) => m.family_id === familyId);
+    }
+
+    if (members.length === 0) return [];
+
+    const summaries: ChildReportSummary[] = [];
+
+    for (const mem of members) {
+      let logs: ScreenTimeLog[] = [];
+      let sessions: FocusSession[] = [];
+      let target: UserTarget | null = null;
+
+      if (this.isUsingSupabase() && supabase) {
+        try {
+          const [logsRes, focusRes, targetRes] = await Promise.all([
+            supabase
+              .from('screen_time_logs')
+              .select('*')
+              .eq('user_id', mem.child_id)
+              .order('start_time', { ascending: false }),
+            supabase
+              .from('focus_sessions')
+              .select('*')
+              .eq('user_id', mem.child_id)
+              .order('started_at', { ascending: false }),
+            supabase
+              .from('user_targets')
+              .select('*')
+              .eq('user_id', mem.child_id)
+              .maybeSingle(),
+          ]);
+
+          if (logsRes.data) logs = logsRes.data as ScreenTimeLog[];
+          if (focusRes.data) sessions = focusRes.data as FocusSession[];
+          if (targetRes.data) target = targetRes.data as UserTarget;
+        } catch {}
+      }
+
+      if (logs.length === 0 && sessions.length === 0) {
+        const vault = readLocalVault(this.customStore);
+        logs = (vault.screen_time_logs || [])
+          .filter((l) => l.user_id === mem.child_id)
+          .sort((a, b) => Date.parse(b.start_time) - Date.parse(a.start_time));
+        sessions = (vault.focus_sessions || [])
+          .filter((s) => s.user_id === mem.child_id)
+          .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at));
+        target = (vault.user_targets || []).find((t) => t.user_id === mem.child_id) || null;
+      }
+
+      // Hitung Screen Time Hari Ini
+      const todayLogs = logs.filter((l) => l.activity_date === todayStr);
+      const todayScreenTimeMinutes = todayLogs.length > 0
+        ? todayLogs.reduce((acc, l) => acc + (l.duration_minutes || 0), 0)
+        : null;
+
+      // Hitung Waktu Fokus Hari Ini
+      const todaySessions = sessions.filter((s) => s.session_date === todayStr);
+      const todayFocusMinutes = Math.round(
+        todaySessions.reduce((acc, s) => acc + (s.actual_focus_seconds || 0), 0) / 60,
+      );
+
+      // Hitung Rata-rata 7 Hari
+      const past7DaysDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+      const past7Logs = logs.filter((l) => l.activity_date >= past7DaysDate);
+      const last7DaysAvgScreenTime = past7Logs.length > 0
+        ? Math.round(past7Logs.reduce((acc, l) => acc + (l.duration_minutes || 0), 0) / 7)
+        : 0;
+
+      const past7Sessions = sessions.filter((s) => s.session_date >= past7DaysDate);
+      const last7DaysAvgFocusTime = past7Sessions.length > 0
+        ? Math.round(past7Sessions.reduce((acc, s) => acc + (s.actual_focus_seconds || 0), 0) / (7 * 60))
+        : 0;
+
+      const maxLimit = target?.max_daily_screentime_minutes || null;
+      const isExceeding = maxLimit !== null && todayScreenTimeMinutes !== null && todayScreenTimeMinutes > maxLimit;
+
+      summaries.push({
+        childId: mem.child_id,
+        displayName: mem.child_name || 'Anak',
+        email: mem.child_email,
         avatarUrl: null,
         todayScreenTimeMinutes,
         todayFocusMinutes,
