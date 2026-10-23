@@ -392,40 +392,66 @@ export const ClassroomPage: React.FC = () => {
     });
   };
 
-  // Cetak Rekap Kelas PDF
+  // Logo TimeCraft SVG untuk dokumen cetak
+  const TIMECRAFT_SVG_LOGO = `
+    <svg width="42" height="42" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+      <rect width="64" height="64" rx="14" fill="#2563EB" />
+      <circle cx="32" cy="32" r="20" stroke="#FFFFFF" stroke-width="4.5" stroke-opacity="0.95" />
+      <circle cx="32" cy="32" r="14" stroke="#93C5FD" stroke-width="2" stroke-dasharray="4 4" />
+      <path d="M32 20V32L40 37" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="32" cy="12" r="2.5" fill="#EFF6FF" />
+    </svg>
+  `;
+
+  // Cetak Rekap Kelas PDF Berstandar TimeCraft
   const handlePrintClassReport = () => {
     if (!selectedClass) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const todayDate = new Date().toLocaleDateString('id-ID', {
+    const printDateTime = new Date().toLocaleString('id-ID', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
+
+    const totalStudents = studentsSummary.length;
+    const totalScreen = studentsSummary.reduce((acc, s) => acc + (s.todayScreenTimeMinutes || 0), 0);
+    const avgScreen = totalStudents > 0 ? Math.round(totalScreen / totalStudents) : 0;
+    const totalFocus = studentsSummary.reduce((acc, s) => acc + (s.todayFocusMinutes || 0), 0);
+    const exceedingCount = studentsSummary.filter((s) => s.isExceedingLimit).length;
+    const compliantPct = totalStudents > 0 ? Math.round(((totalStudents - exceedingCount) / totalStudents) * 100) : 100;
 
     const rowsHtml = studentsSummary
       .map(
         (s, idx) => `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${idx + 1}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
-            <strong>${s.displayName}</strong><br/>
-            <span style="font-size: 11px; color: #64748b;">${s.email}</span>
+        <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #64748b;">${idx + 1}</td>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
+            <div style="font-weight: 700; color: #0f172a; font-size: 13px;">${s.displayName}</div>
+            <div style="font-size: 11px; color: #64748b; font-family: monospace;">${s.email}</div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">
-            <strong>${s.todayScreenTimeMinutes !== null ? s.todayScreenTimeMinutes + 'm' : '—'}</strong>
-            ${s.isExceedingLimit ? '<br/><span style="color: #ef4444; font-size: 10px; font-weight: bold;">Melewati Batas</span>' : ''}
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+            <div style="font-weight: 700; font-size: 13px; color: #0f172a;">${s.todayScreenTimeMinutes !== null ? s.todayScreenTimeMinutes + 'm' : '—'}</div>
+            <div style="margin-top: 3px;">
+              ${s.isExceedingLimit 
+                ? '<span style="display:inline-block; padding: 2px 7px; border-radius: 999px; background: #fef2f2; color: #dc2626; font-size: 10px; font-weight: 700; border: 1px solid #fecaca;">⚠️ Melewati Batas</span>' 
+                : '<span style="display:inline-block; padding: 2px 7px; border-radius: 999px; background: #ecfdf5; color: #059669; font-size: 10px; font-weight: 700; border: 1px solid #a7f3d0;">✓ Tertib</span>'}
+            </div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #2563eb;">
-            <strong>${s.todayFocusMinutes > 0 ? s.todayFocusMinutes + 'm' : '0m'}</strong>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+            <div style="font-weight: 700; font-size: 13px; color: #2563eb;">${s.todayFocusMinutes > 0 ? s.todayFocusMinutes + 'm' : '0m'}</div>
+            <div style="font-size: 10px; color: #64748b;">Pomodoro</div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 12px;">
-            Layar: ${s.last7DaysAvgScreenTime}m<br/>Fokus: ${s.last7DaysAvgFocusTime}m
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11.5px; color: #334155;">
+            <div>Layar: <strong>${s.last7DaysAvgScreenTime}m</strong></div>
+            <div style="color: #2563eb;">Fokus: <strong>${s.last7DaysAvgFocusTime}m</strong></div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px;">
-            ${new Date(s.joinedAt).toLocaleDateString('id-ID')}
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">
+            ${new Date(s.joinedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
           </td>
         </tr>`,
       )
@@ -433,39 +459,248 @@ export const ClassroomPage: React.FC = () => {
 
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="id">
         <head>
-          <title>Rekapitulasi Kelas — ${selectedClass.class_name}</title>
+          <meta charset="UTF-8" />
+          <title>Laporan Kelas — ${selectedClass.class_name} | TimeCraft</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; }
-            h1 { font-size: 20px; margin-bottom: 4px; }
-            .meta { font-size: 12px; color: #64748b; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-            th { background: #f8fafc; padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: left; font-size: 11px; text-transform: uppercase; color: #475569; }
+            @page { size: A4 portrait; margin: 12mm 15mm; }
+            * { box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #0f172a;
+              background: #ffffff;
+              margin: 0;
+              padding: 0;
+              line-height: 1.45;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .header-bar {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #2563eb;
+              padding-bottom: 14px;
+              margin-bottom: 18px;
+            }
+            .brand-box {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .brand-name {
+              font-size: 22px;
+              font-weight: 800;
+              color: #0f172a;
+              letter-spacing: -0.5px;
+            }
+            .brand-tagline {
+              font-size: 11px;
+              color: #2563eb;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .doc-badge {
+              text-align: right;
+            }
+            .doc-pill {
+              display: inline-block;
+              background: #eff6ff;
+              color: #1d4ed8;
+              font-size: 10.5px;
+              font-weight: 800;
+              padding: 3px 10px;
+              border-radius: 999px;
+              border: 1px solid #bfdbfe;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .doc-date {
+              font-size: 11px;
+              color: #64748b;
+              margin-top: 4px;
+            }
+            .info-card {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-left: 4px solid #2563eb;
+              border-radius: 8px;
+              padding: 12px 16px;
+              margin-bottom: 16px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .metrics-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 10px;
+              margin-bottom: 18px;
+            }
+            .metric-box {
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px 12px;
+              text-align: center;
+            }
+            .metric-val {
+              font-size: 18px;
+              font-weight: 800;
+              color: #0f172a;
+              margin-top: 2px;
+            }
+            .metric-lbl {
+              font-size: 10.5px;
+              font-weight: 600;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+              font-size: 12px;
+            }
+            th {
+              background: #0f172a;
+              color: #ffffff;
+              padding: 9px 12px;
+              text-align: left;
+              font-size: 10.5px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .insight-box {
+              background: #f0fdf4;
+              border: 1px solid #bbf7d0;
+              border-radius: 8px;
+              padding: 12px 14px;
+              margin-bottom: 22px;
+              font-size: 11.5px;
+              color: #166534;
+              line-height: 1.5;
+            }
+            .footer-sign {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              margin-top: 28px;
+              padding-top: 14px;
+              border-top: 1px dashed #cbd5e1;
+            }
+            .system-watermark {
+              font-size: 10.5px;
+              color: #94a3b8;
+              max-width: 320px;
+              line-height: 1.4;
+            }
+            .sign-box {
+              text-align: center;
+              min-width: 180px;
+            }
+            .sign-line {
+              margin-top: 45px;
+              border-bottom: 1px solid #334155;
+            }
           </style>
         </head>
         <body>
-          <h1>Laporan Pemantauan Kelas: ${selectedClass.class_name}</h1>
-          <div class="meta">
-            Kode Kelas: <strong>${selectedClass.class_code}</strong> | Tanggal Laporan: ${todayDate} | Dicetak oleh: ${user?.display_name || user?.email}
+          <!-- Header Resmi TimeCraft -->
+          <div class="header-bar">
+            <div class="brand-box">
+              ${TIMECRAFT_SVG_LOGO}
+              <div>
+                <div class="brand-name">TimeCraft</div>
+                <div class="brand-tagline">Screen Time & Focus Monitoring Platform</div>
+              </div>
+            </div>
+            <div class="doc-badge">
+              <span class="doc-pill">Laporan Resmi Pemantauan Kelas</span>
+              <div class="doc-date">Dicetak: ${printDateTime} WIB</div>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">time-craft-ruby.vercel.app</div>
+            </div>
           </div>
+
+          <!-- Informasi Ruang Kelas -->
+          <div class="info-card">
+            <div>
+              <div style="font-size: 16px; font-weight: 800; color: #0f172a;">${selectedClass.class_name}</div>
+              <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
+                Guru / Pembimbing: <strong>${user?.display_name || 'Guru'}</strong> (${user?.email || '—'})
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Kode Kelas Siswa</div>
+              <div style="font-size: 15px; font-weight: 800; color: #2563eb; letter-spacing: 1px; font-family: monospace;">${selectedClass.class_code}</div>
+            </div>
+          </div>
+
+          <!-- Metrik Ringkasan Kelas -->
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="metric-lbl">Total Siswa</div>
+              <div class="metric-val">${totalStudents} <span style="font-size: 12px; font-weight: 500;">Murid</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-lbl">Rata-rata Layar Hari Ini</div>
+              <div class="metric-val">${avgScreen} <span style="font-size: 12px; font-weight: 500;">Menit</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-lbl">Total Fokus Belajar</div>
+              <div class="metric-val" style="color: #2563eb;">${totalFocus} <span style="font-size: 12px; font-weight: 500;">Menit</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-lbl">Kepatuhan Batas</div>
+              <div class="metric-val" style="color: ${compliantPct >= 80 ? '#059669' : '#d97706'};">${compliantPct}%</div>
+            </div>
+          </div>
+
+          <!-- Tabel Data Murid -->
           <table>
             <thead>
               <tr>
-                <th style="width: 40px; text-align: center;">No</th>
-                <th>Nama Siswa</th>
+                <th style="width: 38px; text-align: center;">No</th>
+                <th>Nama Siswa & Akun</th>
                 <th style="text-align: center;">Waktu Layar Hari Ini</th>
                 <th style="text-align: center;">Fokus Belajar Hari Ini</th>
                 <th style="text-align: center;">Rerata 7 Hari</th>
-                <th style="text-align: center;">Tanggal Terhubung</th>
+                <th style="text-align: center; width: 95px;">Terhubung</th>
               </tr>
             </thead>
             <tbody>
-              ${rowsHtml || '<tr><td colspan="6" style="text-align:center; padding: 20px;">Belum ada siswa terdaftar dalam kelas ini.</td></tr>'}
+              ${rowsHtml || '<tr><td colspan="6" style="text-align:center; padding: 24px; color: #64748b;">Belum ada siswa yang terhubung dalam kelas ini.</td></tr>'}
             </tbody>
           </table>
+
+          <!-- Catatan Edukasi & Pengawasan -->
+          <div class="insight-box">
+            <strong>💡 Catatan Bimbingan Akademik & Kebiasaan Layar:</strong><br/>
+            Laporan ini merekam durasi interaksi digital dan sesi konsentrasi belajar siswa. Diharapkan bimbingan berkelanjutan agar murid tetap menyeimbangkan kegiatan daring produktif dengan istirahat fisik secara teratur.
+          </div>
+
+          <!-- Tanda Tangan & Verifikasi Resmi -->
+          <div class="footer-sign">
+            <div class="system-watermark">
+              <strong>TimeCraft Verified Document</strong><br/>
+              Dokumen elektronik resmi ini diterbitkan secara otomatis oleh platform TimeCraft (time-craft-ruby.vercel.app). Data disinkronkan secara aman dan transparan.
+            </div>
+            <div class="sign-box">
+              <div style="font-size: 11px; color: #64748b;">Mengetahui & Memverifikasi,</div>
+              <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-top: 2px;">Guru / Pembimbing Kelas</div>
+              <div class="sign-line"></div>
+              <div style="font-size: 11px; font-weight: 700; color: #0f172a; margin-top: 4px;">${user?.display_name || user?.email}</div>
+            </div>
+          </div>
+
           <script>
-            window.onload = function() { window.print(); }
+            window.onload = function() {
+              setTimeout(function() { window.print(); }, 250);
+            };
           </script>
         </body>
       </html>
@@ -473,40 +708,55 @@ export const ClassroomPage: React.FC = () => {
     printWindow.document.close();
   };
 
-  // Cetak Rekap Keluarga PDF
+  // Cetak Rekap Keluarga PDF Berstandar TimeCraft
   const handlePrintFamilyReport = () => {
     if (!selectedFamily) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const todayDate = new Date().toLocaleDateString('id-ID', {
+    const printDateTime = new Date().toLocaleString('id-ID', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
+
+    const totalChildren = childrenSummary.length;
+    const totalScreen = childrenSummary.reduce((acc, c) => acc + (c.todayScreenTimeMinutes || 0), 0);
+    const avgScreen = totalChildren > 0 ? Math.round(totalScreen / totalChildren) : 0;
+    const totalFocus = childrenSummary.reduce((acc, c) => acc + (c.todayFocusMinutes || 0), 0);
+    const exceedingCount = childrenSummary.filter((c) => c.isExceedingLimit).length;
+    const compliantPct = totalChildren > 0 ? Math.round(((totalChildren - exceedingCount) / totalChildren) * 100) : 100;
 
     const rowsHtml = childrenSummary
       .map(
         (c, idx) => `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${idx + 1}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
-            <strong>${c.displayName}</strong><br/>
-            <span style="font-size: 11px; color: #64748b;">${c.email}</span>
+        <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #64748b;">${idx + 1}</td>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
+            <div style="font-weight: 700; color: #0f172a; font-size: 13px;">${c.displayName}</div>
+            <div style="font-size: 11px; color: #64748b; font-family: monospace;">${c.email}</div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">
-            <strong>${c.todayScreenTimeMinutes !== null ? c.todayScreenTimeMinutes + 'm' : '—'}</strong>
-            ${c.isExceedingLimit ? '<br/><span style="color: #ef4444; font-size: 10px; font-weight: bold;">Melewati Batas Rumah</span>' : ''}
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+            <div style="font-weight: 700; font-size: 13px; color: #0f172a;">${c.todayScreenTimeMinutes !== null ? c.todayScreenTimeMinutes + 'm' : '—'}</div>
+            <div style="margin-top: 3px;">
+              ${c.isExceedingLimit 
+                ? '<span style="display:inline-block; padding: 2px 7px; border-radius: 999px; background: #fef2f2; color: #dc2626; font-size: 10px; font-weight: 700; border: 1px solid #fecaca;">⚠️ Melewati Batas Rumah</span>' 
+                : '<span style="display:inline-block; padding: 2px 7px; border-radius: 999px; background: #ecfdf5; color: #059669; font-size: 10px; font-weight: 700; border: 1px solid #a7f3d0;">✓ Terkendali</span>'}
+            </div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #2563eb;">
-            <strong>${c.todayFocusMinutes > 0 ? c.todayFocusMinutes + 'm' : '0m'}</strong>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+            <div style="font-weight: 700; font-size: 13px; color: #2563eb;">${c.todayFocusMinutes > 0 ? c.todayFocusMinutes + 'm' : '0m'}</div>
+            <div style="font-size: 10px; color: #64748b;">Pomodoro</div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 12px;">
-            Layar: ${c.last7DaysAvgScreenTime}m<br/>Fokus: ${c.last7DaysAvgFocusTime}m
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11.5px; color: #334155;">
+            <div>Layar: <strong>${c.last7DaysAvgScreenTime}m</strong></div>
+            <div style="color: #2563eb;">Fokus: <strong>${c.last7DaysAvgFocusTime}m</strong></div>
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px;">
-            ${new Date(c.joinedAt).toLocaleDateString('id-ID')}
+          <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">
+            ${new Date(c.joinedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
           </td>
         </tr>`,
       )
@@ -514,39 +764,248 @@ export const ClassroomPage: React.FC = () => {
 
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="id">
         <head>
-          <title>Rekapitulasi Layar Keluarga — ${selectedFamily.family_name}</title>
+          <meta charset="UTF-8" />
+          <title>Laporan Screen Time Keluarga — ${selectedFamily.family_name} | TimeCraft</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; }
-            h1 { font-size: 20px; margin-bottom: 4px; }
-            .meta { font-size: 12px; color: #64748b; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-            th { background: #f8fafc; padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: left; font-size: 11px; text-transform: uppercase; color: #475569; }
+            @page { size: A4 portrait; margin: 12mm 15mm; }
+            * { box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #0f172a;
+              background: #ffffff;
+              margin: 0;
+              padding: 0;
+              line-height: 1.45;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .header-bar {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #2563eb;
+              padding-bottom: 14px;
+              margin-bottom: 18px;
+            }
+            .brand-box {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .brand-name {
+              font-size: 22px;
+              font-weight: 800;
+              color: #0f172a;
+              letter-spacing: -0.5px;
+            }
+            .brand-tagline {
+              font-size: 11px;
+              color: #2563eb;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .doc-badge {
+              text-align: right;
+            }
+            .doc-pill {
+              display: inline-block;
+              background: #eff6ff;
+              color: #1d4ed8;
+              font-size: 10.5px;
+              font-weight: 800;
+              padding: 3px 10px;
+              border-radius: 999px;
+              border: 1px solid #bfdbfe;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .doc-date {
+              font-size: 11px;
+              color: #64748b;
+              margin-top: 4px;
+            }
+            .info-card {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-left: 4px solid #2563eb;
+              border-radius: 8px;
+              padding: 12px 16px;
+              margin-bottom: 16px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .metrics-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 10px;
+              margin-bottom: 18px;
+            }
+            .metric-box {
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px 12px;
+              text-align: center;
+            }
+            .metric-val {
+              font-size: 18px;
+              font-weight: 800;
+              color: #0f172a;
+              margin-top: 2px;
+            }
+            .metric-lbl {
+              font-size: 10.5px;
+              font-weight: 600;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+              font-size: 12px;
+            }
+            th {
+              background: #0f172a;
+              color: #ffffff;
+              padding: 9px 12px;
+              text-align: left;
+              font-size: 10.5px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .insight-box {
+              background: #f0fdf4;
+              border: 1px solid #bbf7d0;
+              border-radius: 8px;
+              padding: 12px 14px;
+              margin-bottom: 22px;
+              font-size: 11.5px;
+              color: #166534;
+              line-height: 1.5;
+            }
+            .footer-sign {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              margin-top: 28px;
+              padding-top: 14px;
+              border-top: 1px dashed #cbd5e1;
+            }
+            .system-watermark {
+              font-size: 10.5px;
+              color: #94a3b8;
+              max-width: 320px;
+              line-height: 1.4;
+            }
+            .sign-box {
+              text-align: center;
+              min-width: 180px;
+            }
+            .sign-line {
+              margin-top: 45px;
+              border-bottom: 1px solid #334155;
+            }
           </style>
         </head>
         <body>
-          <h1>Laporan Screen Time Keluarga: ${selectedFamily.family_name}</h1>
-          <div class="meta">
-            Kode Keluarga: <strong>${selectedFamily.family_code}</strong> | Tanggal: ${todayDate} | Dipantau oleh: ${user?.display_name || user?.email}
+          <!-- Header Resmi TimeCraft -->
+          <div class="header-bar">
+            <div class="brand-box">
+              ${TIMECRAFT_SVG_LOGO}
+              <div>
+                <div class="brand-name">TimeCraft</div>
+                <div class="brand-tagline">Screen Time & Focus Monitoring Platform</div>
+              </div>
+            </div>
+            <div class="doc-badge">
+              <span class="doc-pill">Laporan Resmi Pemantauan Keluarga</span>
+              <div class="doc-date">Dicetak: ${printDateTime} WIB</div>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">time-craft-ruby.vercel.app</div>
+            </div>
           </div>
+
+          <!-- Informasi Ruang Keluarga -->
+          <div class="info-card">
+            <div>
+              <div style="font-size: 16px; font-weight: 800; color: #0f172a;">${selectedFamily.family_name}</div>
+              <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
+                Orang Tua / Pendamping: <strong>${user?.display_name || 'Orang Tua'}</strong> (${user?.email || '—'})
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Kode Akses Keluarga</div>
+              <div style="font-size: 15px; font-weight: 800; color: #2563eb; letter-spacing: 1px; font-family: monospace;">${selectedFamily.family_code}</div>
+            </div>
+          </div>
+
+          <!-- Metrik Ringkasan Keluarga -->
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="metric-lbl">Total Anak Terhubung</div>
+              <div class="metric-val">${totalChildren} <span style="font-size: 12px; font-weight: 500;">Anak</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-lbl">Rerata Layar Hari Ini</div>
+              <div class="metric-val">${avgScreen} <span style="font-size: 12px; font-weight: 500;">Menit</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-lbl">Total Fokus Belajar</div>
+              <div class="metric-val" style="color: #2563eb;">${totalFocus} <span style="font-size: 12px; font-weight: 500;">Menit</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-lbl">Kepatuhan Batas Rumah</div>
+              <div class="metric-val" style="color: ${compliantPct >= 80 ? '#059669' : '#d97706'};">${compliantPct}%</div>
+            </div>
+          </div>
+
+          <!-- Tabel Data Anak -->
           <table>
             <thead>
               <tr>
-                <th style="width: 40px; text-align: center;">No</th>
-                <th>Nama Anak</th>
+                <th style="width: 38px; text-align: center;">No</th>
+                <th>Nama Anak & Akun</th>
                 <th style="text-align: center;">Screen Time Hari Ini</th>
                 <th style="text-align: center;">Fokus Belajar Hari Ini</th>
                 <th style="text-align: center;">Rerata 7 Hari</th>
-                <th style="text-align: center;">Terhubung Sejak</th>
+                <th style="text-align: center; width: 95px;">Terhubung</th>
               </tr>
             </thead>
             <tbody>
-              ${rowsHtml || '<tr><td colspan="6" style="text-align:center; padding: 20px;">Belum ada anak terhubung dalam ruang keluarga ini.</td></tr>'}
+              ${rowsHtml || '<tr><td colspan="6" style="text-align:center; padding: 24px; color: #64748b;">Belum ada anak yang terhubung dalam ruang keluarga ini.</td></tr>'}
             </tbody>
           </table>
+
+          <!-- Catatan Edukasi & Pengawasan -->
+          <div class="insight-box">
+            <strong>💡 Pedoman Kebiasaan Layar Sehat TimeCraft:</strong><br/>
+            Dampingi anak agar membiasakan aturan istirahat mata 20-20-20 (memandang jarak 6 meter selama 20 detik setiap 20 menit menatap layar gawai) serta membatasi akses layar 1 jam sebelum waktu tidur demi kualitas istirahat dan perkembangan yang optimal.
+          </div>
+
+          <!-- Tanda Tangan & Verifikasi Resmi -->
+          <div class="footer-sign">
+            <div class="system-watermark">
+              <strong>TimeCraft Verified Document</strong><br/>
+              Dokumen elektronik resmi ini diterbitkan secara otomatis oleh platform TimeCraft (time-craft-ruby.vercel.app). Data disinkronkan secara aman dari aktivitas perangkat anak.
+            </div>
+            <div class="sign-box">
+              <div style="font-size: 11px; color: #64748b;">Mengetahui & Memverifikasi,</div>
+              <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-top: 2px;">Orang Tua / Wali Pendamping</div>
+              <div class="sign-line"></div>
+              <div style="font-size: 11px; font-weight: 700; color: #0f172a; margin-top: 4px;">${user?.display_name || user?.email}</div>
+            </div>
+          </div>
+
           <script>
-            window.onload = function() { window.print(); }
+            window.onload = function() {
+              setTimeout(function() { window.print(); }, 250);
+            };
           </script>
         </body>
       </html>
