@@ -796,7 +796,7 @@ export const ClassroomPage: React.FC = () => {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Contoh: Keluarga Harits atau Rumah Kami"
+                  placeholder="Contoh: Keluarga Fulan atau Rumah Kami"
                   value={newFamilyName}
                   onChange={(e) => setNewFamilyName(e.target.value)}
                   required
