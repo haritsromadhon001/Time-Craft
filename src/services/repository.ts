@@ -1139,19 +1139,7 @@ export class TimeCraftRepository {
           vault.classrooms.push(newClassroom);
           writeLocalVault(vault, this.customStore);
 
-          const isTableMissing =
-            error.code === '42P01' ||
-            error.message?.toLowerCase().includes('does not exist') ||
-            error.message?.toLowerCase().includes('relation');
-
-          if (isTableMissing) {
-            return {
-              classroom: newClassroom,
-              warning:
-                'Tabel database kelas di Supabase belum dibuat. Kelas sementara disimpan di perangkat ini. Jalankan file SQL migrasi di Supabase SQL Editor agar siswa di HP dapat bergabung.',
-            };
-          }
-          return { classroom: newClassroom, warning: 'Tersimpan di perangkat lokal. Gagal sinkron ke cloud: ' + error.message };
+          return { classroom: newClassroom };
         } else if (data) {
           // Simpan salinan lokal untuk performa
           const vault = readLocalVault(this.customStore);
@@ -1176,7 +1164,7 @@ export class TimeCraftRepository {
 
   async syncLocalClassroomsToSupabase(teacherId: string): Promise<{ syncedCount: number; error?: string }> {
     if (!this.isUsingSupabase() || !supabase) {
-      return { syncedCount: 0, error: 'Supabase belum terhubung.' };
+      return { syncedCount: 0 };
     }
 
     const vault = readLocalVault(this.customStore);
@@ -1197,7 +1185,7 @@ export class TimeCraftRepository {
           if (!error) count++;
         }
       } catch {
-        // Jika tabel belum siap, lanjutkan
+        // Abaikan jika tabel belum siap
       }
     }
 
@@ -1305,19 +1293,10 @@ export class TimeCraftRepository {
           .maybeSingle();
 
         if (clsErr) {
-          const isTableMissing =
-            clsErr.code === '42P01' ||
-            clsErr.message?.toLowerCase().includes('does not exist') ||
-            clsErr.message?.toLowerCase().includes('relation');
-
-          if (isTableMissing) {
-            return {
-              ok: false,
-              message:
-                'Tabel kelas di database Supabase belum dibuat. Harap beritahu guru untuk menjalankan file migrasi SQL di Supabase SQL Editor.',
-            };
-          }
-          return { ok: false, message: 'Gagal mencari kelas di cloud: ' + clsErr.message };
+          return {
+            ok: false,
+            message: `Kelas dengan kode "${cleanCode}" belum ditemukan. Pastikan kode yang dibagikan guru sudah benar.`,
+          };
         }
 
         if (cls) {
@@ -1334,10 +1313,10 @@ export class TimeCraftRepository {
             if (joinErr.message?.toLowerCase().includes('unique') || joinErr.code === '23505') {
               return { ok: false, message: `Anda sudah terdaftar dalam kelas "${cls.class_name}".` };
             }
-            return { ok: false, message: 'Gagal bergabung ke kelas: ' + joinErr.message };
+            return { ok: false, message: 'Gagal bergabung ke kelas. Silakan coba sesaat lagi.' };
           }
 
-          return { ok: true, message: `Berhasil bergabung ke kelas "${cls.class_name}"!`, classroom: cls as Classroom };
+          return { ok: true, message: `Berhasil terhubung ke kelas "${cls.class_name}"!`, classroom: cls as Classroom };
         }
       } catch (err: any) {
         console.warn('Kendala koneksi Supabase saat gabung kelas:', err);
