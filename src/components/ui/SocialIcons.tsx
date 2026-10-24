@@ -32,16 +32,24 @@ export const InstagramIcon: React.FC<IconProps> = ({ size = 18, className, style
   <Instagram size={size} className={className} style={style} aria-hidden="true" />
 );
 
-export const GmailIcon: React.FC<IconProps> = ({ size = 18, className, style }) => (
+export const GmailIcon: React.FC<IconProps> = ({ size = 22, className, style }) => (
   <svg
     width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
+    height={Math.round((size * 399) / 512)}
+    viewBox="0 49.4 512 399.42"
+    fill="none"
     className={className}
     style={style}
     aria-hidden="true"
   >
-    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+    <g fillRule="evenodd">
+      <g fillRule="nonzero">
+        <path fill="#4285F4" d="M34.91 448.818h81.454V251L0 163.727V413.91c0 19.287 15.622 34.91 34.91 34.91z" />
+        <path fill="#34A853" d="M395.636 448.818h81.455c19.287 0 34.909-15.622 34.909-34.909V163.727L395.636 251z" />
+        <path fill="#FBBC04" d="M395.636 99.727V251L512 163.727v-46.545c0-43.142-49.25-67.782-83.782-41.891z" />
+      </g>
+      <path fill="#EA4335" d="M116.364 251V99.727L256 204.455 395.636 99.727V251L256 355.727z" />
+      <path fill="#C5221F" fillRule="nonzero" d="M0 117.182v46.545L116.364 251V99.727L83.782 75.291C49.25 49.4 0 74.04 0 117.18z" />
+    </g>
   </svg>
 );
