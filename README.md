@@ -22,6 +22,7 @@
 
 ## 📑 Daftar Isi
 
+- [📚 Dokumentasi Vibecoder & Spesifikasi](#-dokumentasi-vibecoder--spesifikasi)
 - [1. Mengenal TimeCraft](#1-mengenal-timecraft)
 - [2. Filosofi & Pilar Utama](#2-filosofi--pilar-utama)
 - [3. Fitur Utama & Modul Sistem](#3-fitur-utama--modul-sistem)
@@ -43,6 +44,19 @@
 - [6. Panduan Menjalankan Proyek Secara Lokal (*Local Setup*)](#6-panduan-menjalankan-proyek-secara-lokal-local-setup)
 - [7. Keamanan & Kebijakan Privasi](#7-keamanan--kebijakan-privasi)
 - [8. Kontribusi & Lisensi](#8-kontribusi--lisensi)
+
+---
+
+## 📚 Dokumentasi Vibecoder & Spesifikasi
+
+Untuk mempermudah pengembangan, kolaborasi pengembang (*pair programming*), dan standarisasi rekayasa perangkat lunak, repositori ini dilengkapi dengan 4 pilar dokumentasi komprehensif:
+
+| Dokumen | Deskripsi & Ruang Lingkup |
+| :--- | :--- |
+| **[SYSTEM_DESIGN.md](file:///SYSTEM_DESIGN.md)** | Mendefinisikan desain visual, palet warna (*Dark/Light mode tokens*), tipografi Inter & JetBrains Mono, komponen UI, speed-dial kontak, serta aturan cetak A4. |
+| **[ARCHITECTURE.md](file:///ARCHITECTURE.md)** | Mendefinisikan tumpukan teknologi (React 19, TS 5.7, Vite 6, Supabase, Vitest), alur data, pola repository dengan *offline fallback*, dan skema basis data PostgreSQL. |
+| **[AGENTS.md](file:///AGENTS.md)** | Mendefinisikan aturan kerja AI Agent, standar *vibecoding*, batasan kode (*strict TypeScript, zero-errors, Vanilla CSS*), dan alur CI/CD otomatis. |
+| **[PRD.md](file:///PRD.md)** | Mendefinisikan proses bisnis produk, masalah yang diselesaikan, persona pengguna, logika fitur mandiri/keluarga/kelas, dan metrik keberhasilan. |
 
 ---
 
