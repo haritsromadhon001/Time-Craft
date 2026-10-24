@@ -5,6 +5,8 @@ export const WHATSAPP_NUMBER = '085711092611';
 export const WHATSAPP_LINK = 'https://wa.me/6285711092611';
 export const INSTAGRAM_HANDLE = 'haritsabdrmd';
 export const INSTAGRAM_LINK = 'https://instagram.com/haritsabdrmd';
+export const GMAIL_ADDRESS = 'haritsromadhon001@gmail.com';
+export const GMAIL_LINK = 'mailto:haritsromadhon001@gmail.com?subject=Feedback%20TimeCraft&body=Halo%20Author%2C%20saya%20ingin%20memberikan%20masukan%20terkait%20TimeCraft%3A%0A%0A';
 
 interface IconProps {
   size?: number;
@@ -28,4 +30,18 @@ export const WhatsAppIcon: React.FC<IconProps> = ({ size = 18, className, style 
 
 export const InstagramIcon: React.FC<IconProps> = ({ size = 18, className, style }) => (
   <Instagram size={size} className={className} style={style} aria-hidden="true" />
+);
+
+export const GmailIcon: React.FC<IconProps> = ({ size = 18, className, style }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    style={style}
+    aria-hidden="true"
+  >
+    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+  </svg>
 );

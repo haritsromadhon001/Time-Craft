@@ -3,8 +3,11 @@ import { MessageCircle, X } from 'lucide-react';
 import {
   WhatsAppIcon,
   InstagramIcon,
+  GmailIcon,
   WHATSAPP_LINK,
   INSTAGRAM_LINK,
+  GMAIL_LINK,
+  GMAIL_ADDRESS,
 } from './SocialIcons';
 
 export const FloatingContactWidget: React.FC = () => {
@@ -42,7 +45,7 @@ export const FloatingContactWidget: React.FC = () => {
 
   return (
     <aside className="floating-contact-root" aria-label="Widget Kontak & Media Sosial">
-      {/* Menu Ikon Mengambang: WhatsApp & Instagram Langsung */}
+      {/* Menu Ikon Mengambang: Gmail, Instagram, WhatsApp Langsung */}
       {isOpen && (
         <div
           ref={menuRef}
@@ -50,6 +53,22 @@ export const FloatingContactWidget: React.FC = () => {
           role="menu"
           aria-label="Pilihan Chat & Media Sosial"
         >
+          {/* Tombol Ikon Gmail */}
+          <a
+            href={GMAIL_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="floating-social-action item-gmail"
+            title={`Kirim Email ke ${GMAIL_ADDRESS}`}
+            aria-label="Gmail"
+            onClick={() => setIsOpen(false)}
+          >
+            <span className="floating-social-label">Gmail</span>
+            <div className="floating-social-icon-btn gmail-btn">
+              <GmailIcon size={20} />
+            </div>
+          </a>
+
           {/* Tombol Ikon Instagram */}
           <a
             href={INSTAGRAM_LINK}

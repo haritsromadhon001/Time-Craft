@@ -9,10 +9,13 @@ import {
 import {
   WhatsAppIcon,
   InstagramIcon,
+  GmailIcon,
   WHATSAPP_NUMBER,
   WHATSAPP_LINK,
   INSTAGRAM_HANDLE,
   INSTAGRAM_LINK,
+  GMAIL_ADDRESS,
+  GMAIL_LINK,
 } from './SocialIcons';
 
 interface DeveloperContactCardProps {
@@ -26,6 +29,7 @@ export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
 }) => {
   const [copiedWA, setCopiedWA] = useState(false);
   const [copiedIG, setCopiedIG] = useState(false);
+  const [copiedGmail, setCopiedGmail] = useState(false);
 
   const handleCopyWA = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,6 +50,18 @@ export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
       await navigator.clipboard.writeText(INSTAGRAM_HANDLE);
       setCopiedIG(true);
       setTimeout(() => setCopiedIG(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleCopyGmail = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(GMAIL_ADDRESS);
+      setCopiedGmail(true);
+      setTimeout(() => setCopiedGmail(false), 2000);
     } catch {
       // Fallback
     }
@@ -84,7 +100,7 @@ export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
         </p>
       )}
 
-      {/* Grid 2 Kartu Interaktif: WhatsApp & Instagram */}
+      {/* Grid Saluran Komunikasi: WhatsApp, Instagram, Gmail */}
       <div className="dev-channels-grid">
         {/* Kartu WhatsApp Pro */}
         <div className="dev-channel-card dev-channel-wa">
@@ -160,6 +176,45 @@ export const DeveloperContactCard: React.FC<DeveloperContactCardProps> = ({
             >
               {copiedIG ? <Check size={13} color="#16a34a" /> : <Copy size={13} />}
               <span>{copiedIG ? 'Tersalin' : 'Salin'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Kartu Gmail Pro */}
+        <div className="dev-channel-card dev-channel-gmail">
+          <div className="dev-channel-top">
+            <div className="dev-channel-icon-wrap gmail-icon-glow">
+              <GmailIcon size={20} />
+            </div>
+            <div className="dev-channel-meta">
+              <span className="dev-channel-tag">Email Resmi</span>
+              <h4 className="dev-channel-title">Gmail</h4>
+            </div>
+          </div>
+
+          <div className="dev-channel-value-box">
+            <span className="dev-channel-value" style={{ fontSize: '0.78rem' }}>{GMAIL_ADDRESS}</span>
+          </div>
+
+          <div className="dev-channel-actions">
+            <a
+              href={GMAIL_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dev-btn-action dev-btn-primary"
+              title={`Kirim email ke ${GMAIL_ADDRESS}`}
+            >
+              <ExternalLink size={13} />
+              <span>Kirim Email</span>
+            </a>
+            <button
+              type="button"
+              className="dev-btn-action dev-btn-secondary"
+              onClick={handleCopyGmail}
+              title="Salin alamat Gmail"
+            >
+              {copiedGmail ? <Check size={13} color="#16a34a" /> : <Copy size={13} />}
+              <span>{copiedGmail ? 'Tersalin' : 'Salin'}</span>
             </button>
           </div>
         </div>

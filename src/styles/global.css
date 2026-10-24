@@ -1994,6 +1994,25 @@ code {
   box-shadow: 0 4px 18px rgba(220, 39, 67, 0.25);
 }
 
+/* Gmail Icon Button */
+.gmail-btn {
+  background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+  box-shadow: 0 4px 16px rgba(234, 67, 53, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.floating-social-action.item-gmail:hover .gmail-btn,
+.floating-social-action.item-gmail:focus-visible .gmail-btn {
+  transform: scale(1.12);
+  box-shadow: 0 8px 24px rgba(234, 67, 53, 0.65), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.floating-social-action.item-gmail:hover .floating-social-label {
+  transform: translateX(-4px);
+  border-color: rgba(234, 67, 53, 0.5);
+  background: rgba(38, 18, 18, 0.96);
+  box-shadow: 0 4px 18px rgba(234, 67, 53, 0.25);
+}
+
 [data-theme="light"] .floating-social-label {
   background: rgba(255, 255, 255, 0.96);
   color: #0f172a;
@@ -2009,6 +2028,11 @@ code {
 [data-theme="light"] .floating-social-action.item-ig:hover .floating-social-label {
   background: #fdf2f8;
   border-color: #f472b6;
+}
+
+[data-theme="light"] .floating-social-action.item-gmail:hover .floating-social-label {
+  background: #fef2f2;
+  border-color: #fca5a5;
 }
 
 /* ============================================================================
@@ -2540,15 +2564,21 @@ code {
 }
 
 .wa-icon-glow {
-  background-color: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(220, 38, 38, 0.35);
-  color: #ef4444;
+  background-color: rgba(37, 211, 102, 0.15);
+  border: 1px solid rgba(37, 211, 102, 0.35);
+  color: #25d366;
 }
 
 .ig-icon-glow {
-  background-color: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(220, 38, 38, 0.35);
-  color: #ef4444;
+  background-color: rgba(220, 39, 67, 0.15);
+  border: 1px solid rgba(220, 39, 67, 0.35);
+  color: #e1306c;
+}
+
+.gmail-icon-glow {
+  background-color: rgba(234, 67, 53, 0.15);
+  border: 1px solid rgba(234, 67, 53, 0.35);
+  color: #ea4335;
 }
 
 .dev-channel-meta {
