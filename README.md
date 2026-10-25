@@ -49,7 +49,7 @@
 
 ## 📚 Dokumentasi Vibecoder & Spesifikasi
 
-Untuk mempermudah pengembangan, kolaborasi pengembang (*pair programming*), dan standarisasi rekayasa perangkat lunak, repositori ini dilengkapi dengan 4 pilar dokumentasi komprehensif:
+Untuk mempermudah pengembangan, kolaborasi pengembang (*pair programming*), dan standarisasi rekayasa perangkat lunak, repositori ini dilengkapi dengan 5 pilar dokumentasi komprehensif:
 
 | Dokumen | Deskripsi & Ruang Lingkup |
 | :--- | :--- |
@@ -57,6 +57,7 @@ Untuk mempermudah pengembangan, kolaborasi pengembang (*pair programming*), dan 
 | **[ARCHITECTURE.md](file:///ARCHITECTURE.md)** | Mendefinisikan tumpukan teknologi (React 19, TS 5.7, Vite 6, Supabase, Vitest), alur data, pola repository dengan *offline fallback*, dan skema basis data PostgreSQL. |
 | **[AGENTS.md](file:///AGENTS.md)** | Mendefinisikan aturan kerja AI Agent, standar *vibecoding*, batasan kode (*strict TypeScript, zero-errors, Vanilla CSS*), dan alur CI/CD otomatis. |
 | **[PRD.md](file:///PRD.md)** | Mendefinisikan proses bisnis produk, masalah yang diselesaikan, persona pengguna, logika fitur mandiri/keluarga/kelas, dan metrik keberhasilan. |
+| **[PROMPTING.md](file:///PROMPTING.md)** | Panduan rekayasa prompt, formula ROCCV, katalog prompt siap pakai, studi kasus, dan daftar pantangan prompting AI. |
 
 ---
 
