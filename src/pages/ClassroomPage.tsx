@@ -470,6 +470,7 @@ export const ClassroomPage: React.FC = () => {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
               color: #0f172a;
               background: #ffffff;
+              color-scheme: light !important;
               margin: 0;
               padding: 0;
               line-height: 1.45;
@@ -566,14 +567,16 @@ export const ClassroomPage: React.FC = () => {
               font-size: 12px;
             }
             th {
-              background: #0f172a;
-              color: #ffffff;
+              background: #ffffff;
+              color: #0f172a;
               padding: 9px 12px;
               text-align: left;
               font-size: 10.5px;
               font-weight: 700;
               text-transform: uppercase;
               letter-spacing: 0.5px;
+              border-top: 1px solid #e2e8f0;
+              border-bottom: 2px solid #2563eb;
             }
             .insight-box {
               background: #f0fdf4;
@@ -775,6 +778,7 @@ export const ClassroomPage: React.FC = () => {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
               color: #0f172a;
               background: #ffffff;
+              color-scheme: light !important;
               margin: 0;
               padding: 0;
               line-height: 1.45;
@@ -871,14 +875,16 @@ export const ClassroomPage: React.FC = () => {
               font-size: 12px;
             }
             th {
-              background: #0f172a;
-              color: #ffffff;
+              background: #ffffff;
+              color: #0f172a;
               padding: 9px 12px;
               text-align: left;
               font-size: 10.5px;
               font-weight: 700;
               text-transform: uppercase;
               letter-spacing: 0.5px;
+              border-top: 1px solid #e2e8f0;
+              border-bottom: 2px solid #2563eb;
             }
             .insight-box {
               background: #f0fdf4;

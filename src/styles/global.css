@@ -149,6 +149,19 @@ body {
   min-height: 100vh;
 }
 
+/* Standar Cetak Global: Selalu latar belakang putih bersih bebas warna hitam */
+@media print {
+  :root,
+  html,
+  body,
+  #root {
+    color-scheme: light !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+}
+
 code {
   font-family: var(--font-mono);
   font-size: 0.84em;

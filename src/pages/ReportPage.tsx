@@ -146,17 +146,21 @@ export const ReportPage: React.FC = () => {
          * ==================================================================== */
         @page {
           size: A4 portrait;
-          margin: 12mm 15mm;
+          margin: 10mm 12mm;
         }
 
         @media print {
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: auto !important;
+          :root,
+          html,
+          html[data-theme="dark"],
+          html[data-theme="light"],
+          body,
+          #root {
+            color-scheme: light !important;
+            background: #ffffff !important;
             background-color: #ffffff !important;
             color: #0f172a !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
@@ -165,8 +169,11 @@ export const ReportPage: React.FC = () => {
           }
           .report-root-container {
             background-color: #ffffff !important;
+            background: #ffffff !important;
             padding: 0 !important;
+            margin: 0 !important;
             min-height: auto !important;
+            color-scheme: light !important;
           }
           .report-paper-a4 {
             box-shadow: none !important;
@@ -182,35 +189,118 @@ export const ReportPage: React.FC = () => {
             page-break-after: avoid !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color-scheme: light !important;
           }
           .header-bar {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
-            padding-bottom: 14px !important;
+            padding-bottom: 8px !important;
             border-bottom: 2px solid #2563eb !important;
-            margin-bottom: 14px !important;
+            margin-bottom: 8px !important;
+          }
+          .info-card {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 6px !important;
+            padding: 6px 10px !important;
+            margin-bottom: 8px !important;
           }
           .metrics-grid {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
-            gap: 10px !important;
-            margin-bottom: 16px !important;
+            gap: 7px !important;
+            margin-bottom: 8px !important;
+          }
+          .metric-box {
+            padding: 6px 8px !important;
+            background: #ffffff !important;
+          }
+          .metric-val {
+            font-size: 14px !important;
+            margin-top: 1px !important;
+          }
+          .metric-lbl {
+            font-size: 9px !important;
+          }
+          .section-header {
+            font-size: 10.5px !important;
+            margin-bottom: 4px !important;
+          }
+          .table-wrap {
+            margin-bottom: 8px !important;
+          }
+          table {
+            font-size: 10px !important;
+            background: #ffffff !important;
+          }
+          th {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border-top: 1px solid #e2e8f0 !important;
+            border-bottom: 2px solid #2563eb !important;
+            padding: 5px 8px !important;
+            font-size: 9.5px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+          }
+          td {
+            padding: 4.5px 8px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            color: #1e293b !important;
+            background: #ffffff !important;
+          }
+          tr:nth-child(even) td {
+            background: #fbfcfe !important;
+          }
+          .status-pill {
+            padding: 1px 6px !important;
+            font-size: 9px !important;
           }
           .eval-grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 12px !important;
-            margin-bottom: 14px !important;
+            gap: 8px !important;
+            margin-bottom: 6px !important;
+          }
+          .eval-card {
+            padding: 6px 8px !important;
+            font-size: 9.5px !important;
+            line-height: 1.35 !important;
+          }
+          .eval-card-head {
+            font-size: 10px !important;
+            margin-bottom: 3px !important;
+          }
+          .insight-box {
+            padding: 6px 8px !important;
+            font-size: 9.5px !important;
+            margin-bottom: 8px !important;
+            line-height: 1.35 !important;
           }
           .footer-sign-block {
             display: flex !important;
             justify-content: space-between !important;
             align-items: flex-end !important;
-            margin-top: 24px !important;
-            padding-top: 14px !important;
+            margin-top: 8px !important;
+            padding-top: 8px !important;
             border-top: 1px dashed #cbd5e1 !important;
             page-break-inside: avoid !important;
+          }
+          .system-watermark {
+            font-size: 9px !important;
+            line-height: 1.3 !important;
+          }
+          .sign-box {
+            font-size: 10px !important;
+          }
+          .sign-line {
+            margin-top: 24px !important;
+            border-bottom: 1px solid #334155 !important;
           }
         }
 
@@ -219,7 +309,7 @@ export const ReportPage: React.FC = () => {
          * ==================================================================== */
         .report-root-container {
           min-height: 100vh;
-          background-color: #090b10;
+          background-color: #f8fafc;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
           color: #0f172a;
           padding-bottom: 40px;
@@ -230,15 +320,15 @@ export const ReportPage: React.FC = () => {
           position: sticky;
           top: 0;
           z-index: 999;
-          background-color: #0f172a;
-          color: #ffffff;
+          background-color: #ffffff;
+          color: #0f172a;
           padding: 12px 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-          border-bottom: 1px solid #1e293b;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+          border-bottom: 1px solid #e2e8f0;
         }
 
         .no-print-bar-title {
@@ -249,6 +339,7 @@ export const ReportPage: React.FC = () => {
 
         .no-print-bar-title strong {
           font-size: 14px;
+          color: #0f172a;
           letter-spacing: -0.2px;
         }
 
@@ -281,9 +372,9 @@ export const ReportPage: React.FC = () => {
         }
 
         .btn-back-action {
-          background-color: transparent;
-          color: #cbd5e1;
-          border: 1px solid #334155;
+          background-color: #ffffff;
+          color: #475569;
+          border: 1px solid #cbd5e1;
           border-radius: 7px;
           padding: 8px 14px;
           font-size: 12.5px;
@@ -297,9 +388,9 @@ export const ReportPage: React.FC = () => {
         }
 
         .btn-back-action:hover {
-          color: #ffffff;
-          border-color: #64748b;
-          background-color: rgba(255, 255, 255, 0.06);
+          color: #0f172a;
+          border-color: #94a3b8;
+          background-color: #f1f5f9;
         }
 
         /* Lembar Dokumen A4 */
@@ -307,10 +398,10 @@ export const ReportPage: React.FC = () => {
           max-width: 820px;
           margin: 20px auto;
           background-color: #ffffff;
-          padding: 28px 32px;
+          padding: 24px 28px;
           border-radius: 10px;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
@@ -442,14 +533,16 @@ export const ReportPage: React.FC = () => {
         }
 
         th {
-          background: #0f172a;
-          color: #ffffff;
-          padding: 9px 12px;
+          background: #ffffff;
+          color: #0f172a;
+          padding: 8px 12px;
           text-align: left;
           font-size: 10.5px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          border-top: 1px solid #e2e8f0;
+          border-bottom: 2px solid #2563eb;
         }
 
         td {
